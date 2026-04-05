@@ -15,6 +15,27 @@
 
         body {
             font-family: Arial, sans-serif;
+            font-size: 12px;
+            line-height: 1.35;
+            color: #000;
+        }
+
+        body,
+        table,
+        th,
+        td,
+        div,
+        p,
+        span,
+        h1,
+        h2,
+        h3,
+        h4,
+        h5,
+        h6,
+        small,
+        strong {
+            font-family: Arial, sans-serif !important;
         }
 
         .container {
@@ -78,9 +99,9 @@
         .bg-wrapper {
             position: absolute;
             right: -150px;
-            top: 160px;
+            top: 220px;
             width: 430px;
-            overflow: hidden;
+            /* overflow: hidden; */
             z-index: 0;
         }
 
@@ -94,7 +115,9 @@
             top: 80px;
             right: 10px;
             width: 320px;
+            scale: 10;
             opacity: 0.08;
+            rotate: -90deg;
         }
 
         footer {
@@ -217,11 +240,11 @@
         }
 
         .summary-row td {
-            background: #fafafa !important;
+            background: transparent !important;
         }
 
         .summary-final td {
-            background: #f0f4ff !important;
+            background: transparent !important;
             font-size: 12px;
             font-weight: bold !important;
         }
