@@ -506,64 +506,121 @@ class QuotationController extends Controller
     }
 
     public function generatePDF(Quotation $quotation)
-{
-    $quotation->load(['items.product', 'client']);
+    {
+        $startedAt = hrtime(true);
 
-    $amount_in_words = $this->convertNumberToWords($quotation->total_amount) . ' Taka Only';
+        $quotation->load(['items.product', 'client']);
+        $loadedAt = hrtime(true);
 
-    $defaultCompany = CompanyDetail::where('is_default', true)->first();
-    $companyLogo = $this->resolvePublicFilePath($quotation->logo ?: ($defaultCompany->photo ?? null));
+        $amount_in_words = $this->convertNumberToWords($quotation->total_amount) . ' Taka Only';
 
-    $signatoryPhotoRaw = $quotation->signatory_photo;
-    if (empty($signatoryPhotoRaw) && !empty($quotation->signatory_user_id)) {
-        $signatoryUser = User::find($quotation->signatory_user_id);
-        if ($signatoryUser) {
-            if (!empty($signatoryUser->photo)) {
-                $signatoryPhotoRaw = $signatoryUser->photo;
-            } elseif (!empty($signatoryUser->images)) {
-                $signatoryPhotoRaw = 'frontend/users/' . $signatoryUser->images;
+        $defaultCompany = CompanyDetail::where('is_default', true)->first();
+        $companyLogo = $this->resolvePublicFilePath($quotation->logo ?: ($defaultCompany->photo ?? null));
+        $pdfHeaderLogo = $this->optimizeImageForPdf(
+            public_path('assets/invoice/assets/logo.png'),
+            'packard-header-logo',
+            420
+        );
+        $pdfBackgroundLogo = $this->optimizeImageForPdf(
+            public_path('assets/invoice/assets/logo.jpg'),
+            'packard-background-logo',
+            420
+        );
+        $pdfDottedBackground = $this->optimizeImageForPdf(
+            public_path('assets/invoice/assets/dotted-background.jpg'),
+            'packard-dotted-background',
+            420
+        );
+
+        $signatoryPhotoRaw = $quotation->signatory_photo;
+        if (empty($signatoryPhotoRaw) && !empty($quotation->signatory_user_id)) {
+            $signatoryUser = User::query()
+                ->select(['id', 'photo', 'images'])
+                ->find($quotation->signatory_user_id);
+
+            if ($signatoryUser) {
+                if (!empty($signatoryUser->photo)) {
+                    $signatoryPhotoRaw = $signatoryUser->photo;
+                } elseif (!empty($signatoryUser->images)) {
+                    $signatoryPhotoRaw = 'frontend/users/' . $signatoryUser->images;
+                }
             }
         }
+
+        $signatoryPhoto = $this->resolvePublicFilePath($signatoryPhotoRaw);
+        $assetsResolvedAt = hrtime(true);
+
+        $data = [
+            'quotation' => $quotation,
+            'amount_in_words' => $amount_in_words,
+
+            // Client snapshot
+            'client_name' => $quotation->client_name,
+            'client_designation' => $quotation->client_designation,
+            'client_address' => $quotation->client_address,
+            'client_phone' => $quotation->client_phone,
+            'client_email' => $quotation->client_email,
+
+            // PDF content
+            'attention_to' => $quotation->attention_to,
+            'body_content' => $quotation->body_content,
+            'terms_conditions' => $quotation->terms_conditions,
+            'subject' => $quotation->subject,
+
+            // Company snapshot
+            'company_name' => $quotation->company_name,
+            'company_phone' => $quotation->company_phone,
+            'company_email' => $quotation->company_email,
+            'company_website' => $quotation->company_website,
+            'company_address' => $quotation->company_address,
+            'company_logo' => $companyLogo,
+            'pdf_header_logo' => $pdfHeaderLogo,
+            'pdf_background_logo' => $pdfBackgroundLogo,
+            'pdf_dotted_background' => $pdfDottedBackground,
+
+            // Signatory snapshot
+            'signatory_name' => $quotation->signatory_name,
+            'signatory_designation' => $quotation->signatory_designation,
+            'signatory_photo' => $this->optimizeImageForPdf($signatoryPhoto, 'quotation-signatory-' . $quotation->id, 220),
+
+            'additional_enclosed' => $quotation->additional_enclosed,
+        ];
+
+        $html = view('pdf.quotations', $data)->render();
+        $viewRenderedAt = hrtime(true);
+
+        $pdf = Pdf::loadHTML($html);
+        $pdfBinary = $pdf->output();
+        $pdfRenderedAt = hrtime(true);
+
+        $timings = [
+            'load_ms' => round(($loadedAt - $startedAt) / 1_000_000, 2),
+            'asset_ms' => round(($assetsResolvedAt - $loadedAt) / 1_000_000, 2),
+            'view_ms' => round(($viewRenderedAt - $assetsResolvedAt) / 1_000_000, 2),
+            'pdf_ms' => round(($pdfRenderedAt - $viewRenderedAt) / 1_000_000, 2),
+            'total_ms' => round(($pdfRenderedAt - $startedAt) / 1_000_000, 2),
+        ];
+
+        logger()->info('Quotation PDF timing', [
+            'quotation_id' => $quotation->id,
+            'quotation_number' => $quotation->quotation_number,
+            'items_count' => $quotation->items->count(),
+            'html_bytes' => strlen($html),
+            'pdf_bytes' => strlen($pdfBinary),
+            'header_logo_kb' => $this->fileSizeInKb($pdfHeaderLogo),
+            'background_logo_kb' => $this->fileSizeInKb($pdfBackgroundLogo),
+            'dotted_background_kb' => $this->fileSizeInKb($pdfDottedBackground),
+            'company_logo_kb' => $this->fileSizeInKb($companyLogo),
+            'signatory_photo_kb' => $this->fileSizeInKb($signatoryPhoto),
+            'timings_ms' => $timings,
+        ]);
+
+        return response($pdfBinary, 200, [
+            'Content-Type' => 'application/pdf',
+            'Content-Disposition' => 'attachment; filename="quotation-' . $quotation->quotation_number . '.pdf"',
+            'X-Quotation-Pdf-Timing' => json_encode($timings),
+        ]);
     }
-    $signatoryPhoto = $this->resolvePublicFilePath($signatoryPhotoRaw);
-
-    $data = [
-        'quotation' => $quotation,
-        'amount_in_words' => $amount_in_words,
-
-        // Client snapshot
-        'client_name' => $quotation->client_name,
-        'client_designation' => $quotation->client_designation,
-        'client_address' => $quotation->client_address,
-        'client_phone' => $quotation->client_phone,
-        'client_email' => $quotation->client_email,
-
-        // PDF content
-        'attention_to' => $quotation->attention_to,
-        'body_content' => $quotation->body_content,
-        'terms_conditions' => $quotation->terms_conditions,
-        'subject' => $quotation->subject,
-
-        // Company snapshot
-        'company_name' => $quotation->company_name,
-        'company_phone' => $quotation->company_phone,
-        'company_email' => $quotation->company_email,
-        'company_website' => $quotation->company_website,
-        'company_address' => $quotation->company_address,
-        'company_logo' => $companyLogo,  // company logo
-
-        // Signatory snapshot
-        'signatory_name' => $quotation->signatory_name,
-        'signatory_designation' => $quotation->signatory_designation,
-        'signatory_photo' => $signatoryPhoto,
-
-        'additional_enclosed' => $quotation->additional_enclosed,
-    ];
-
-    $pdf = Pdf::loadView('pdf.quotations', $data);
-
-    return $pdf->download('quotation-' . $quotation->quotation_number . '.pdf');
-}
 
     private function resolvePublicFilePath(?string $path): ?string
     {
@@ -584,6 +641,99 @@ class QuotationController extends Controller
         $fullPath = $isAbsolute ? $path : public_path(ltrim($path, '/'));
 
         return file_exists($fullPath) ? $fullPath : null;
+    }
+
+    private function fileSizeInKb(?string $path): ?float
+    {
+        if (!$path || !is_file($path)) {
+            return null;
+        }
+
+        return round(filesize($path) / 1024, 2);
+    }
+
+    private function optimizeImageForPdf(?string $path, string $cacheKey, int $maxWidth = 420, int $jpegQuality = 82): ?string
+    {
+        if (!$path || !is_file($path)) {
+            return null;
+        }
+
+        $imageInfo = @getimagesize($path);
+        if (!$imageInfo) {
+            return $path;
+        }
+
+        [$width, $height] = $imageInfo;
+        $mime = $imageInfo['mime'] ?? null;
+        if (!$mime || $width < 1 || $height < 1) {
+            return $path;
+        }
+
+        $cacheDir = storage_path('app/pdf-image-cache');
+        if (!is_dir($cacheDir)) {
+            mkdir($cacheDir, 0755, true);
+        }
+
+        $extension = match ($mime) {
+            'image/png' => 'png',
+            'image/jpeg', 'image/jpg' => 'jpg',
+            default => null,
+        };
+
+        if (!$extension) {
+            return $path;
+        }
+
+        $cacheHash = sha1($cacheKey . '|' . $path . '|' . filemtime($path) . '|' . $maxWidth . '|' . $jpegQuality);
+        $cachedPath = $cacheDir . DIRECTORY_SEPARATOR . $cacheHash . '.' . $extension;
+        if (is_file($cachedPath)) {
+            return $cachedPath;
+        }
+
+        $targetWidth = min($width, $maxWidth);
+        $scale = $targetWidth / $width;
+        $targetHeight = max(1, (int) round($height * $scale));
+
+        $sourceImage = @imagecreatefromstring(file_get_contents($path));
+        if (!$sourceImage) {
+            return $path;
+        }
+
+        $targetImage = imagecreatetruecolor($targetWidth, $targetHeight);
+
+        if ($mime === 'image/png') {
+            imagealphablending($targetImage, false);
+            imagesavealpha($targetImage, true);
+            $transparent = imagecolorallocatealpha($targetImage, 255, 255, 255, 127);
+            imagefilledrectangle($targetImage, 0, 0, $targetWidth, $targetHeight, $transparent);
+        } else {
+            $white = imagecolorallocate($targetImage, 255, 255, 255);
+            imagefilledrectangle($targetImage, 0, 0, $targetWidth, $targetHeight, $white);
+        }
+
+        imagecopyresampled(
+            $targetImage,
+            $sourceImage,
+            0,
+            0,
+            0,
+            0,
+            $targetWidth,
+            $targetHeight,
+            $width,
+            $height
+        );
+
+        if ($mime === 'image/png') {
+            imagepng($targetImage, $cachedPath, 7);
+        } else {
+            imagejpeg($targetImage, $cachedPath, $jpegQuality);
+        }
+
+        imagedestroy($sourceImage);
+        imagedestroy($targetImage);
+
+        return is_file($cachedPath) ? $cachedPath : $path;
     }
 
     // public function generatePDF(Quotation $quotation)
