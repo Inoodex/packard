@@ -1,6 +1,6 @@
 @extends('frontend.layouts.app')
 
-@section('title', 'Create Quotation')
+@section('title', 'Edit Quotation')
 
 @section('content')
     <!-- Select2 CSS -->
@@ -85,12 +85,14 @@
         $defaultTerms =
             " Delivery timeline will be confirmed after order confirmation.\n Prices are in BDT.\n VAT/TAX are not included unless mentioned.\n Payment terms: As per mutual agreement.";
         $hasClients = isset($clients) && $clients->count() > 0;
-        $oldClientMode = $hasClients ? old('client_mode', 'existing') : 'new';
+
+        // Determine client mode: if quotation has client_id, use existing mode
+        $oldClientMode = $quotation->client_id ? 'existing' : 'new';
     @endphp
 
     <div class="container-fluid mt-4">
         <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
-            <h3 class="fw-bold mb-0">Create New Quotation</h3>
+            <h3 class="fw-bold mb-0">Edit Quotation - {{ $quotation->quotation_number }}</h3>
             <a href="{{ route('quotations.index') }}" class="btn btn-secondary rounded-pill px-4">Back</a>
         </div>
 
@@ -108,8 +110,9 @@
             <div class="alert alert-warning">{{ session('warning') }}</div>
         @endif
 
-        <form id="quotationForm" action="{{ route('quotations.store') }}" method="POST">
+        <form id="quotationForm" action="{{ route('quotations.update', $quotation->id) }}" method="POST">
             @csrf
+            @method('PUT')
 
             <div class="card shadow-sm border-0 rounded-3 mb-3">
                 <div class="card-body">
@@ -141,7 +144,7 @@
                                     <option value="{{ $client->id }}" data-name="{{ $client->name }}"
                                         data-phone="{{ $client->phone }}" data-email="{{ $client->email }}"
                                         data-address="{{ $client->address }}"
-                                        {{ (string) old('client_id') === (string) $client->id ? 'selected' : '' }}>
+                                        {{ (string) old('client_id', $quotation->client_id) === (string) $client->id ? 'selected' : '' }}>
                                         {{ $client->name }} - {{ $client->phone }}
                                     </option>
                                 @endforeach
@@ -152,31 +155,31 @@
                         <div class="col-md-6">
                             <label class="form-label">Client/Company Name *</label>
                             <input type="text" id="client-name-input" name="client_name" class="form-control"
-                                value="{{ old('client_name') }}">
+                                value="{{ old('client_name', $quotation->client_name) }}">
                         </div>
                         <div class="col-md-6">
                             <label class="form-label">Attention To</label>
                             <input type="text" name="attention_to" class="form-control"
-                                value="{{ old('attention_to') }}">
+                                value="{{ old('attention_to', $quotation->attention_to) }}">
                         </div>
                         <div class="col-md-6">
                             <label class="form-label">Designation</label>
                             <input type="text" name="client_designation" class="form-control"
-                                value="{{ old('client_designation') }}">
+                                value="{{ old('client_designation', $quotation->client_designation) }}">
                         </div>
                         <div class="col-md-6">
                             <label class="form-label">Phone</label>
                             <input type="text" id="client-phone-input" name="client_phone" class="form-control"
-                                value="{{ old('client_phone') }}">
+                                value="{{ old('client_phone', $quotation->client_phone) }}">
                         </div>
                         <div class="col-md-6">
                             <label class="form-label">Email</label>
                             <input type="email" id="client-email-input" name="client_email" class="form-control"
-                                value="{{ old('client_email') }}">
+                                value="{{ old('client_email', $quotation->client_email) }}">
                         </div>
                         <div class="col-12">
                             <label class="form-label">Client Address *</label>
-                            <textarea id="client-address-input" name="client_address" class="form-control" rows="3">{{ old('client_address') }}</textarea>
+                            <textarea id="client-address-input" name="client_address" class="form-control" rows="3">{{ old('client_address', $quotation->client_address) }}</textarea>
                         </div>
                     </div>
                 </div>
@@ -188,15 +191,16 @@
                     <div class="row g-3">
                         <div class="col-12">
                             <label class="form-label">Subject</label>
-                            <input type="text" name="subject" class="form-control" value="{{ old('subject') }}">
+                            <input type="text" name="subject" class="form-control"
+                                value="{{ old('subject', $quotation->subject) }}">
                         </div>
                         <div class="col-12">
                             <label class="form-label">Body Content</label>
-                            <textarea name="body_content" class="form-control" rows="8">{{ old('body_content') }}</textarea>
+                            <textarea name="body_content" class="form-control" rows="8">{{ old('body_content', $quotation->body_content) }}</textarea>
                         </div>
                         <div class="col-12">
                             <label class="form-label">Terms & Conditions *</label>
-                            <textarea name="terms_conditions" class="form-control" rows="6" required>{{ old('terms_conditions', $defaultTerms) }}</textarea>
+                            <textarea name="terms_conditions" class="form-control" rows="6" required>{{ old('terms_conditions', $quotation->terms_conditions ?: $defaultTerms) }}</textarea>
                         </div>
                     </div>
                 </div>
@@ -209,25 +213,26 @@
                         <div class="col-md-6">
                             <label class="form-label">Company Name *</label>
                             <input type="text" name="company_name" class="form-control"
-                                value="{{ old('company_name', $defaultCompany->name ?? '') }}" required>
+                                value="{{ old('company_name', $quotation->company_name ?: $defaultCompany->name ?? '') }}"
+                                required>
                         </div>
                         <div class="col-md-6">
                             <label class="form-label">Company Phone</label>
                             <input type="text" name="company_phone" class="form-control"
-                                value="{{ old('company_phone', $defaultCompany->phone ?? '') }}">
+                                value="{{ old('company_phone', $quotation->company_phone ?: $defaultCompany->phone ?? '') }}">
                         </div>
                         <div class="col-md-6">
                             <label class="form-label">Company Email</label>
                             <input type="email" name="company_email" class="form-control"
-                                value="{{ old('company_email', $defaultCompany->email ?? '') }}">
+                                value="{{ old('company_email', $quotation->company_email ?: $defaultCompany->email ?? '') }}">
                         </div>
                         <div class="col-md-6">
                             <label class="form-label">Company Website</label>
                             <input type="text" name="company_website" class="form-control"
-                                value="{{ old('company_website', $defaultCompany->website ?? '') }}">
+                                value="{{ old('company_website', $quotation->company_website ?: $defaultCompany->website ?? '') }}">
                         </div>
                         <input type="hidden" name="company_address"
-                            value="{{ old('company_address', $defaultCompany->address ?? '') }}">
+                            value="{{ old('company_address', $quotation->company_address ?: $defaultCompany->address ?? '') }}">
                         <div class="col-md-6">
                             <label class="form-label">Select Signatory *</label>
                             <select name="signatory_user_id" id="signatory-user-select" class="form-select" required>
@@ -242,26 +247,34 @@
                                     @endphp
                                     <option value="{{ $signatory->id }}" data-name="{{ $signatory->name }}"
                                         data-photo="{{ $signatoryPhotoPath ? asset($signatoryPhotoPath) : '' }}"
-                                        {{ (string) old('signatory_user_id') === (string) $signatory->id ? 'selected' : '' }}>
+                                        {{ (string) old('signatory_user_id', $quotation->signatory_user_id ?? '') === (string) $signatory->id ? 'selected' : '' }}>
                                         {{ $signatory->name }}
                                     </option>
                                 @endforeach
                             </select>
                             <input type="hidden" name="signatory_name" id="signatory-name-input"
-                                value="{{ old('signatory_name') }}">
+                                value="{{ old('signatory_name', $quotation->signatory_name) }}">
                         </div>
                         <div class="col-md-6">
                             <label class="form-label">Digital Signature</label>
                             <div class="border rounded p-2 text-center bg-light">
-                                <img id="signatory-photo-preview" src="" alt="Signature Preview"
-                                    style="max-height: 80px; display:none; object-fit: contain;">
-                                <div id="signatory-photo-empty" class="text-muted small">No signature photo selected.
+                                @php
+                                    $signatoryPhotoSrc = '';
+                                    if (!empty($quotation->signatory_photo)) {
+                                        $signatoryPhotoSrc = asset($quotation->signatory_photo);
+                                    }
+                                @endphp
+                                <img id="signatory-photo-preview" src="{{ $signatoryPhotoSrc }}" alt="Signature Preview"
+                                    style="max-height: 80px; {{ $signatoryPhotoSrc ? 'display:inline-block;' : 'display:none;' }} object-fit: contain;">
+                                <div id="signatory-photo-empty" class="text-muted small"
+                                    style="{{ $signatoryPhotoSrc ? 'display:none;' : 'display:block;' }}">No signature
+                                    photo selected.
                                 </div>
                             </div>
                         </div>
                         <div class="col-12">
                             <label class="form-label">Additional Enclosed</label>
-                            <textarea name="additional_enclosed" class="form-control" rows="2">{{ old('additional_enclosed') }}</textarea>
+                            <textarea name="additional_enclosed" class="form-control" rows="2">{{ old('additional_enclosed', $quotation->additional_enclosed) }}</textarea>
                         </div>
                     </div>
                 </div>
@@ -280,7 +293,7 @@
                                     <option value="{{ $product->id }}" data-name="{{ $product->name }}"
                                         data-description="{{ $product->details ?? 'description not available' }}"
                                         data-price="{{ $product->price ?? 0 }}">
-                                        {{ \Illuminate\Support\Str::limit($product->name, 40) }}
+                                        {{ \Illuminate\Support\Str::limit($product->name, 30) }}
                                     </option>
                                 @endforeach
                             </select>
@@ -320,11 +333,11 @@
                                 <tr>
                                     <th>#</th>
                                     <th>Product</th>
-                                    <th class="text-center">Unit Price</th>
-                                    <th class="text-center">Payable Price</th>
+                                    <th class="text-end">Unit Price</th>
+                                    <th class="text-end">Payable Price</th>
                                     <th class="text-center">Qty</th>
-                                    <th class="text-center">Discount %</th>
-                                    <th class="text-center">Total</th>
+                                    <th class="text-end">Item Discount</th>
+                                    <th class="text-end">Total</th>
                                     <th class="text-center">Action</th>
                                 </tr>
                             </thead>
@@ -340,39 +353,12 @@
                                     <td></td>
                                 </tr>
                                 <tr>
-                                    <td colspan="6" class="text-end"><strong>Special Discount (%)</strong></td>
+                                    <td colspan="6" class="text-end"><strong>Overall Discount (%)</strong></td>
                                     <td class="text-end">
                                         <input type="number" name="discount_percent" id="discount-percent"
                                             class="form-control form-control-sm text-end"
-                                            value="{{ old('discount_percent', 0) }}" min="0" max="100"
-                                            step="0.01">
-                                    </td>
-                                    <td></td>
-                                </tr>
-                                <tr>
-                                    <td colspan="6" class="text-end"><strong>Round Off (-)</strong></td>
-                                    <td class="text-end">
-                                        <input type="number" name="round_off" id="round-off"
-                                            class="form-control form-control-sm text-end"
-                                            value="{{ old('round_off', 0) }}" min="0" step="0.01">
-                                    </td>
-                                    <td></td>
-                                </tr>
-                                <tr>
-                                    <td colspan="6" class="text-end"><strong>Installation Charge</strong></td>
-                                    <td class="text-end">
-                                        <input type="number" name="installation_charge" id="installation-charge"
-                                            class="form-control form-control-sm text-end"
-                                            value="{{ old('installation_charge', 0) }}" min="0" step="0.01">
-                                    </td>
-                                    <td></td>
-                                </tr>
-                                <tr>
-                                    <td colspan="6" class="text-end"><strong>AIT (%)</strong></td>
-                                    <td class="text-end">
-                                        <input type="number" name="tax_percent" id="tax-percent"
-                                            class="form-control form-control-sm text-end"
-                                            value="{{ old('tax_percent', 0) }}" min="0" step="0.01">
+                                            value="{{ old('discount_percent', $quotation->discount_percent ?? 0) }}"
+                                            min="0" max="100" step="0.01">
                                     </td>
                                     <td></td>
                                 </tr>
@@ -381,13 +367,43 @@
                                     <td class="text-end">
                                         <input type="number" name="vat_percent" id="vat-percent"
                                             class="form-control form-control-sm text-end"
-                                            value="{{ old('vat_percent', 0) }}" min="0" step="0.01">
+                                            value="{{ old('vat_percent', $quotation->vat_percent ?? 0) }}" min="0"
+                                            step="0.01">
                                     </td>
                                     <td></td>
                                 </tr>
-
                                 <tr>
-                                    <td colspan="6" class="text-end"><strong>Grand Total</strong></td>
+                                    <td colspan="6" class="text-end"><strong>Tax (%)</strong></td>
+                                    <td class="text-end">
+                                        <input type="number" name="tax_percent" id="tax-percent"
+                                            class="form-control form-control-sm text-end"
+                                            value="{{ old('tax_percent', $quotation->tax_percent ?? 0) }}" min="0"
+                                            step="0.01">
+                                    </td>
+                                    <td></td>
+                                </tr>
+                                <tr>
+                                    <td colspan="6" class="text-end"><strong>Installation Charge</strong></td>
+                                    <td class="text-end">
+                                        <input type="number" name="installation_charge" id="installation-charge"
+                                            class="form-control form-control-sm text-end"
+                                            value="{{ old('installation_charge', $quotation->installation_charge ?? 0) }}"
+                                            min="0" step="0.01">
+                                    </td>
+                                    <td></td>
+                                </tr>
+                                <tr>
+                                    <td colspan="6" class="text-end"><strong>Round Off (-)</strong></td>
+                                    <td class="text-end">
+                                        <input type="number" name="round_off" id="round-off"
+                                            class="form-control form-control-sm text-end"
+                                            value="{{ old('round_off', $quotation->round_off ?? 0) }}" min="0"
+                                            step="0.01">
+                                    </td>
+                                    <td></td>
+                                </tr>
+                                <tr>
+                                    <td colspan="6" class="text-end"><strong>Total Amount</strong></td>
                                     <td class="text-end"><strong id="grand-total">0.00</strong></td>
                                     <td></td>
                                 </tr>
@@ -398,7 +414,7 @@
             </div>
 
             <div class="d-flex justify-content-end mb-4">
-                <button type="submit" class="btn btn-success rounded-pill px-5">Save Quotation</button>
+                <button type="submit" class="btn btn-success rounded-pill px-5">Update Quotation</button>
             </div>
         </form>
     </div>
@@ -687,6 +703,70 @@
                     // Trigger the vanilla change event for product selection logic
                     productSelect.dispatchEvent(new Event('change'));
                 });
+            }
+
+            // Load existing items for edit mode
+            const existingItems = @json($quotation->items->toArray());
+            if (existingItems && existingItems.length > 0) {
+                existingItems.forEach((item, index) => {
+                    const productName = item.product?.name || 'Product #' + item.product_id;
+                    const productDesc = item.description || item.product?.details ||
+                        'description not available';
+                    const shortName = productName.length > 15 ? `${productName.substring(0, 25)}...` :
+                        productName;
+                    const unitPrice = parseFloat(item.unit_price) || 0;
+                    const qty = parseFloat(item.quantity) || 1;
+                    const lineTotal = qty * unitPrice;
+                    const lineDiscountAmount = parseFloat(item.discount_amount) || 0;
+                    const lineDiscountPercent = lineTotal > 0 ? (lineDiscountAmount / lineTotal) * 100 : 0;
+
+                    const tr = document.createElement('tr');
+                    tr.className = 'item-row';
+                    tr.innerHTML = `
+                        <td class="item-sl">${index + 1}</td>
+                        <td>
+                            <div class="fw-semibold">${shortName}</div>
+                            <small class="text-muted">${productDesc}</small>
+                            <input type="hidden" name="items[${rowIndex}][product_id]" value="${item.product_id}">
+                            <input type="hidden" name="items[${rowIndex}][description]" value="${productDesc.replace(/"/g, '&quot;')}">
+                        </td>
+                        <td>
+                            <input type="number" class="form-control form-control-sm text-end item-db-price"
+                                value="${unitPrice.toFixed(2)}" min="0" step="0.01" readonly>
+                        </td>
+                        <td>
+                            <input type="number" class="form-control form-control-sm text-end item-payable"
+                                name="items[${rowIndex}][unit_price]" value="${unitPrice.toFixed(2)}" min="0" step="0.01" required>
+                        </td>
+                        <td>
+                            <input type="number" class="form-control form-control-sm text-center item-qty"
+                                name="items[${rowIndex}][quantity]" value="${qty}" min="1" required>
+                        </td>
+                        <td>
+                            <input type="number" class="form-control form-control-sm text-end item-discount"
+                                name="items[${rowIndex}][discount_percent]" value="${lineDiscountPercent.toFixed(2)}" min="0" max="100" step="0.01">
+                        </td>
+                        <td class="text-end fw-semibold item-total">${(lineTotal - lineDiscountAmount).toFixed(2)}</td>
+                        <td class="text-center">
+                            <button type="button" class="btn btn-sm btn-danger remove-item px-2 fw-bold">X</button>
+                        </td>
+                    `;
+
+                    tbody.appendChild(tr);
+                    rowIndex++;
+
+                    tr.querySelector('.item-qty').addEventListener('input', recalcTotals);
+                    tr.querySelector('.item-payable').addEventListener('input', recalcTotals);
+                    tr.querySelector('.item-discount').addEventListener('input', recalcTotals);
+                    tr.querySelector('.remove-item').addEventListener('click', function() {
+                        tr.remove();
+                        renumber();
+                        recalcTotals();
+                    });
+                });
+
+                renumber();
+                recalcTotals();
             }
         })();
     </script>

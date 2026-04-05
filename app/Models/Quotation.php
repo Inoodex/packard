@@ -17,6 +17,7 @@ class Quotation extends Model
         'expiry_date',
         'notes',
         'sub_total',
+        'discount_percent',
         'discount_amount',
         'vat_percent',
         'vat_amount',
@@ -78,28 +79,56 @@ class Quotation extends Model
         parent::boot();
 
         static::creating(function ($quotation) {
-            $quotation->quotation_number = static::generateQuotationNumber();
+            // Only auto-generate if quotation_number is not already set
+            if (empty($quotation->quotation_number)) {
+                $quotation->quotation_number = static::generateQuotationNumber($quotation);
+            }
         });
     }
 
-    public static function generateQuotationNumber()
-{
-    $prefix = 'PK';
-    $date = date('Ymd'); // 20251126
-    
-    // Search last quotation for today
-    $lastQuotation = static::where('quotation_number', 'like', "{$prefix}-{$date}-%")
-    ->withTrashed() // include deleted quotations
-    ->orderBy('id', 'desc')
-    ->first();
+    public static function generateQuotationNumber($quotation = null)
+    {
+        // Get client/company name prefix
+        $prefix = 'quo'; // Default fallback
+        
+        if ($quotation) {
+            // Try to get client name first
+            if ($quotation->client_id) {
+                $client = Client::find($quotation->client_id);
+                if ($client) {
+                    // Use first word of client name, lowercase
+                    $prefix = strtolower(explode(' ', trim($client->name))[0]);
+                }
+            }
+            // If no client, try company name
+            elseif (!empty($quotation->client_name)) {
+                $prefix = strtolower(explode(' ', trim($quotation->client_name))[0]);
+            }
+        }
+        
+        // Clean prefix: only allow alphanumeric characters
+        $prefix = preg_replace('/[^a-z0-9]/', '', $prefix);
+        if (empty($prefix)) {
+            $prefix = 'quo';
+        }
+        
+        // Search last quotation with same prefix
+        $lastQuotation = static::where('quotation_number', 'like', "{$prefix}-%")
+            ->withTrashed() // include deleted quotations
+            ->orderBy('id', 'desc')
+            ->first();
 
-    // Extract last 4 digits sequence
-    $sequence = $lastQuotation 
-        ? (int)substr($lastQuotation->quotation_number, -4) + 1 
-        : 1;
+        // Extract last sequence number
+        $sequence = 1;
+        if ($lastQuotation) {
+            // Get the last part after the final hyphen
+            $lastParts = explode('-', $lastQuotation->quotation_number);
+            $lastSeq = end($lastParts);
+            $sequence = (int)$lastSeq + 1;
+        }
 
-    // Format: QT-20251126-0001
-    return "{$prefix}-{$date}-" . str_pad($sequence, 4, '0', STR_PAD_LEFT);
-}
+        // Format: hasan-0001, rahim-0002, etc.
+        return "{$prefix}-" . str_pad($sequence, 4, '0', STR_PAD_LEFT);
+    }
 
 }

@@ -321,11 +321,13 @@
         <table>
             <thead>
                 <tr>
-                    <th class="serial">S/L</th>
-                    <th class="product-description">PRODUCT DESCRIPTION</th>
+                    <th class="serial">S.N.</th>
+                    <th class="model">MODEL/PART NO.</th>
+                    <th class="product-description">DESCRIPTION OF GOODS</th>
                     {{-- <th class="product-photo">PHOTO</th> --}}
                     <th class="quantity">QTY.</th>
                     <th class="unit-price">UNIT PRICE</th>
+                    <th class="discount">Dis.(%)</th>
                     <th class="total-price">TOTAL PRICE</th>
                 </tr>
             </thead>
@@ -333,42 +335,25 @@
                 @foreach ($quotation->items as $index => $item)
                     <tr>
                         <td class="serial">{{ $index + 1 }}</td>
+                        <td class="model">{{ $item->product?->product_code ?? 'N/A' }}</td>
                         <td class="product-description">
                             @if ($item->product)
                                 <strong>{{ $item->product->name }}</strong>
+                                @if ($item->product->details)
+                                    <br><small style="color: #666;">{{ $item->product->details }}</small>
+                                @endif
                             @endif
                         </td>
-                        {{-- <td class="product-photo" style="text-align: center; width: 80px;">
-                            @if ($item->product && $item->product->photos)
-                                @php
-                                    $photos = is_array($item->product->photos)
-                                        ? $item->product->photos
-                                        : json_decode($item->product->photos, true);
-                                @endphp
-                                @if (!empty($photos) && isset($photos[0]))
-                                    <img src="{{ storage_path('app/public/' . $photos[0]) }}"
-                                        style="height: 60px; width: 60px; object-fit: cover;" alt="Product Image">
-                                @else
-                                    <div
-                                        style="height: 60px; width: 60px; line-height: 60px; border: 1px dashed #ccc; text-align: center;">
-                                        No Image
-                                    </div>
-                                @endif
-                            @else
-                                <div
-                                    style="height: 60px; width: 60px; line-height: 60px; border: 1px dashed #ccc; text-align: center;">
-                                    No Image
-                                </div>
-                            @endif
-                        </td> --}}
                         <td class="quantity">{{ number_format($item->quantity) }}</td>
                         <td class="unit-price">{{ number_format($item->unit_price, 2) }}</td>
+                        <td class="discount">{{ number_format($item->discount_percent ?? 0, 2) }}%</td>
                         <td class="total-price">{{ number_format($item->total, 2) }}</td>
                     </tr>
                 @endforeach
 
                 @php
                     $subTotal = (float) ($quotation->sub_total ?? 0);
+                    $discountPercent = (float) ($quotation->discount_percent ?? 0);
                     $discountAmount = (float) ($quotation->discount_amount ?? 0);
                     $baseAfterDiscount = max(0, $subTotal - $discountAmount);
                     $installationCharge = (float) ($quotation->installation_charge ?? 0);
@@ -391,48 +376,51 @@
 
                 <!-- Total Rows -->
                 <tr class="total-row summary-row">
-                    <td colspan="4">Subtotal</td>
+                    <td colspan="6">GROSS TOTAL (BDT)</td>
                     <td class="total-price">{{ number_format($subTotal, 2) }}</td>
                 </tr>
-                @if ($discountAmount > 0)
+                @if ($discountPercent > 0)
                     <tr class="total-row summary-row">
-                        <td colspan="4">Discount</td>
-                        <td class="total-price">-{{ number_format($discountAmount, 2) }}</td>
+                        <td colspan="6">SPECIAL DISCOUNT @if ($discountPercent > 0)
+                                ({{ rtrim(rtrim(number_format($discountPercent, 2), '0'), '.') }}% BDT)
+                            @endif (BDT)
+                        </td>
+                        <td class="total-price">{{ number_format($discountAmount, 2) }}</td>
+                    </tr>
+                @endif
+                @if ($roundOff > 0)
+                    <tr class="total-row summary-row">
+                        <td colspan="6">ROUND OFF - (BDT)</td>
+                        <td class="total-price">{{ number_format($roundOff, 2) }}</td>
                     </tr>
                 @endif
                 @if ($installationCharge > 0)
                     <tr class="total-row summary-row">
-                        <td colspan="4">Installation Charge</td>
+                        <td colspan="6">INSTALLATION CHARGE (BDT)</td>
                         <td class="total-price">{{ number_format($installationCharge, 2) }}</td>
                     </tr>
                 @endif
                 @if ($vatAmount > 0)
                     <tr class="total-row summary-row">
-                        <td colspan="4">VAT @if ($vatPercent > 0)
-                                ({{ rtrim(rtrim(number_format($vatPercent, 2), '0'), '.') }}%)
-                            @endif
+                        <td colspan="6">VAT @if ($vatPercent > 0)
+                                ({{ rtrim(rtrim(number_format($vatPercent, 2), '0'), '.') }}% (BDT))
+                            @endif (BDT)
                         </td>
                         <td class="total-price">{{ number_format($vatAmount, 2) }}</td>
                     </tr>
                 @endif
                 @if ($taxAmount > 0)
                     <tr class="total-row summary-row">
-                        <td colspan="4">Tax @if ($taxPercent > 0)
-                                ({{ rtrim(rtrim(number_format($taxPercent, 2), '0'), '.') }}%)
-                            @endif
+                        <td colspan="6">AIT@if ($taxPercent > 0)
+                                ({{ rtrim(rtrim(number_format($taxPercent, 2), '0'), '.') }}% (BDT))
+                            @endif (BDT)
                         </td>
                         <td class="total-price">{{ number_format($taxAmount, 2) }}</td>
                     </tr>
                 @endif
-                @if ($roundOff > 0)
-                    <tr class="total-row summary-row">
-                        <td colspan="4">Round Off (+/-)</td>
-                        <td class="total-price">-{{ number_format($roundOff, 2) }}</td>
-                    </tr>
-                @endif
 
                 <tr class="total-row summary-final">
-                    <td colspan="4">Total Amount</td>
+                    <td colspan="6">GRAND TOTAL (BDT)</td>
                     <td class="total-price">{{ number_format($quotation->total_amount, 2) }}</td>
                 </tr>
             </tbody>

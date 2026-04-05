@@ -78,6 +78,12 @@
                                             <ul class="dropdown-menu dropdown-menu-end">
                                                 <li>
                                                     <a class="dropdown-item"
+                                                        href="{{ route('quotations.edit', $quotation->id) }}">
+                                                        <i class="far fa-edit me-2"></i>Edit
+                                                    </a>
+                                                </li>
+                                                <li>
+                                                    <a class="dropdown-item"
                                                         href="{{ route('quotations.show', $quotation->id) }}">
                                                         <i class="far fa-eye me-2"></i>View
                                                     </a>

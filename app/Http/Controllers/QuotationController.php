@@ -90,7 +90,7 @@ class QuotationController extends Controller
         'company_website' => 'nullable|string|max:255',
         'company_address' => 'nullable|string',
         'additional_enclosed' => 'nullable|string',
-        'discount_amount' => 'nullable|numeric|min:0',
+        'discount_percent' => 'nullable|numeric|min:0|max:100',
         'vat_percent' => 'nullable|numeric|min:0',
         'tax_percent' => 'nullable|numeric|min:0',
         'installation_charge' => 'nullable|numeric|min:0',
@@ -99,7 +99,7 @@ class QuotationController extends Controller
         'items.*.product_id' => 'required|exists:products,id',
         'items.*.quantity' => 'required|integer|min:1',
         'items.*.unit_price' => 'required|numeric|min:0',
-        'items.*.discount_amount' => 'nullable|numeric|min:0',
+        'items.*.discount_percent' => 'nullable|numeric|min:0|max:100',
         'items.*.description' => 'nullable|string',
     ];
 
@@ -145,24 +145,40 @@ class QuotationController extends Controller
                 $clientPhone = $client->phone ?? '';
                 $clientEmail = $client->email ?? '';
             } else {
-                $client = Client::create([
-                    'name' => $clientName,
-                    'phone' => $clientPhone ?: '-',
-                    'email' => $clientEmail ?: ('no-email-' . now()->timestamp . '@local.test'),
-                    'address' => $clientAddress,
-                ]);
-                $clientId = $client->id;
+                // Check if client already exists (by email or phone)
+                $existingClient = Client::findByPhoneOrEmail($clientPhone, $clientEmail);
+                
+                if ($existingClient) {
+                    // Reuse existing client
+                    $client = $existingClient;
+                    $clientId = $client->id;
+                    $clientName = $client->name;
+                    $clientAddress = $client->address;
+                    $clientPhone = $client->phone ?? '';
+                    $clientEmail = $client->email ?? '';
+                } else {
+                    // Create new client
+                    $client = Client::create([
+                        'name' => $clientName,
+                        'phone' => $clientPhone ?: '-',
+                        'email' => $clientEmail ?: ('no-email-' . now()->timestamp . '@local.test'),
+                        'address' => $clientAddress,
+                    ]);
+                    $clientId = $client->id;
+                }
             }
 
             // Calculate totals
             $subTotal = 0;
             foreach ($request->items as $item) {
                 $lineTotal = $item['quantity'] * $item['unit_price'];
-                $lineDiscount = min($lineTotal, (float)($item['discount_amount'] ?? 0));
+                $lineDiscountPercent = (float)($item['discount_percent'] ?? 0);
+                $lineDiscount = $lineTotal * ($lineDiscountPercent / 100);
                 $subTotal += ($lineTotal - $lineDiscount);
             }
 
-            $discountAmount = min($subTotal, (float)($request->discount_amount ?? 0));
+            $discountPercent = (float)($request->discount_percent ?? 0);
+            $discountAmount = $subTotal * ($discountPercent / 100);
             $vatPercent = (float)($request->vat_percent ?? 0);
             $taxPercent = (float)($request->tax_percent ?? 0);
             $installationCharge = (float)($request->installation_charge ?? 0);
@@ -180,6 +196,7 @@ class QuotationController extends Controller
                 'expiry_date' => now()->addDays(15),
                 'notes' => $request->subject,
                 'sub_total' => $subTotal,
+                'discount_percent' => $discountPercent,
                 'discount_amount' => $discountAmount,
                 'vat_percent' => $vatPercent,
                 'vat_amount' => $vatAmount,
@@ -215,7 +232,8 @@ class QuotationController extends Controller
             // Create quotation items
             foreach ($request->items as $item) {
                 $lineTotal = $item['quantity'] * $item['unit_price'];
-                $lineDiscount = min($lineTotal, (float)($item['discount_amount'] ?? 0));
+                $lineDiscountPercent = (float)($item['discount_percent'] ?? 0);
+                $lineDiscount = $lineTotal * ($lineDiscountPercent / 100);
                 $netTotal = $lineTotal - $lineDiscount;
 
                 QuotationItem::create([
@@ -223,6 +241,7 @@ class QuotationController extends Controller
                     'product_id' => $item['product_id'],
                     'quantity' => $item['quantity'],
                     'unit_price' => $item['unit_price'],
+                    'discount_percent' => $lineDiscountPercent,
                     'total' => $netTotal,
                     'description' => $item['description'] ?? null,
                 ]);
@@ -247,17 +266,30 @@ class QuotationController extends Controller
 
     public function edit(Quotation $quotation)
     {
-        $clients = collect();
+        $clients = Schema::hasTable('clients')
+            ? Client::query()->latest()->get()
+            : collect();
+        $defaultCompany = Schema::hasTable('company_details')
+            ? CompanyDetail::query()->where('is_default', true)->first()
+            : null;
+        $userColumns = ['id', 'name', 'images'];
+        if (Schema::hasColumn('users', 'photo')) {
+            $userColumns[] = 'photo';
+        }
+        $signatories = Schema::hasTable('users')
+            ? User::query()->orderBy('name')->get($userColumns)
+            : collect();
         $products = Schema::hasTable('products')
             ? Product::query()->get()
             : collect();
         $quotation->load('items');
 
-        return view('frontend.pages.quotations.edit', compact('quotation', 'clients', 'products'));
+        return view('frontend.pages.quotations.edit', compact('quotation', 'clients', 'products', 'signatories', 'defaultCompany'));
     }
 
     public function update(Request $request, Quotation $quotation)
     {
+        // Backward compatibility for legacy discount keys
         if (!$request->has('discount_amount')) {
             $fallbackDiscount = $request->input('overall_discount', $request->input('overall_disocunt'));
             if ($fallbackDiscount !== null) {
@@ -265,54 +297,195 @@ class QuotationController extends Controller
             }
         }
 
-        $request->validate([
-            'client_id' => 'required|exists:clients,id',
-            'quotation_date' => 'required|date',
-            'expiry_date' => 'required|date|after:quotation_date',
-            'notes' => 'nullable|string',
-            'discount_amount' => 'nullable|numeric|min:0',
+        // Get default company and logo
+        $defaultCompany = CompanyDetail::where('is_default', true)->first();
+        $companyLogo = $defaultCompany?->photo;
+
+        // Validation rules
+        $rules = [
+            'client_mode' => 'required|in:existing,new',
+            'client_id' => 'nullable|integer',
+            'client_name' => 'nullable|string|max:255',
+            'client_designation' => 'nullable|string|max:255',
+            'client_address' => 'nullable|string',
+            'client_phone' => 'nullable|string|max:20',
+            'client_email' => 'nullable|email|max:255',
+            'attention_to' => 'nullable|string|max:255',
+            'body_content' => 'nullable|string',
+            'terms_conditions' => 'required|string',
+            'subject' => 'nullable|string|max:255',
+            'company_name' => 'required|string|max:255',
+            'signatory_user_id' => 'required|integer|exists:users,id',
+            'company_phone' => 'nullable|string|max:20',
+            'company_email' => 'nullable|email|max:255',
+            'company_website' => 'nullable|string|max:255',
+            'company_address' => 'nullable|string',
+            'additional_enclosed' => 'nullable|string',
+            'discount_percent' => 'nullable|numeric|min:0|max:100',
+            'vat_percent' => 'nullable|numeric|min:0',
+            'tax_percent' => 'nullable|numeric|min:0',
+            'installation_charge' => 'nullable|numeric|min:0',
+            'round_off' => 'nullable|numeric|min:0',
             'items' => 'required|array|min:1',
             'items.*.product_id' => 'required|exists:products,id',
             'items.*.quantity' => 'required|integer|min:1',
             'items.*.unit_price' => 'required|numeric|min:0',
-        ]);
+            'items.*.discount_percent' => 'nullable|numeric|min:0|max:100',
+            'items.*.description' => 'nullable|string',
+        ];
 
-        DB::transaction(function () use ($request, $quotation) {
-            // Delete existing items
-            $quotation->items()->delete();
+        if (Schema::hasTable('clients')) {
+            $rules['client_id'] = 'nullable|integer|exists:clients,id';
+        }
 
-            $subTotal = 0;
+        if (($request->input('client_mode') ?? 'new') === 'existing') {
+            $rules['client_id'] = 'required|integer|exists:clients,id';
+        } else {
+            $rules['client_name'] = 'required|string|max:255';
+            $rules['client_address'] = 'required|string';
+        }
 
-            // Calculate new subtotal
-            foreach ($request->items as $item) {
-                $subTotal += $item['quantity'] * $item['unit_price'];
-            }
+        $validated = $request->validate($rules);
 
-            $discountAmount = $request->discount_amount ?? 0;
-            $totalAmount = $subTotal - $discountAmount;
+        try {
+            DB::transaction(function () use ($request, $quotation, $companyLogo) {
+                // Prepare client data
+                $clientId = null;
+                $clientName = $request->client_name ?? '';
+                $clientAddress = $request->client_address ?? '';
+                $clientPhone = $request->client_phone ?? '';
+                $clientEmail = $request->client_email ?? '';
 
-            // Update quotation
-            $quotation->update([
-                'client_id' => $request->client_id,
-                'quotation_date' => $request->quotation_date,
-                'expiry_date' => $request->expiry_date,
-                'notes' => $request->notes,
-                'sub_total' => $subTotal,
-                'discount_amount' => $discountAmount,
-                'total_amount' => $totalAmount,
-            ]);
+                // Signatory info
+                $signatoryUser = User::findOrFail($request->signatory_user_id);
+                $signatoryName = $signatoryUser->name;
+                $signatoryDesignation = optional($signatoryUser->roles()->orderBy('name')->first())->name ?? '';
+                $signatoryPhoto = null;
+                if (!empty($signatoryUser->photo)) {
+                    $signatoryPhoto = $signatoryUser->photo;
+                } elseif (!empty($signatoryUser->images)) {
+                    $signatoryPhoto = 'frontend/users/' . $signatoryUser->images;
+                }
 
-            // Create new items
-            foreach ($request->items as $item) {
-                QuotationItem::create([
-                    'quotation_id' => $quotation->id,
-                    'product_id' => $item['product_id'],
-                    'quantity' => $item['quantity'],
-                    'unit_price' => $item['unit_price'],
-                    'total' => $item['quantity'] * $item['unit_price'],
+                // Handle client selection
+                if (($request->input('client_mode') ?? 'new') === 'existing') {
+                    $client = Client::findOrFail($request->client_id);
+                    $clientId = $client->id;
+                    $clientName = $client->name;
+                    $clientAddress = $client->address;
+                    $clientPhone = $client->phone ?? '';
+                    $clientEmail = $client->email ?? '';
+                } else {
+                    // Check if client already exists (by email or phone)
+                    $existingClient = Client::findByPhoneOrEmail($clientPhone, $clientEmail);
+                    
+                    if ($existingClient) {
+                        // Reuse existing client
+                        $client = $existingClient;
+                        $clientId = $client->id;
+                        $clientName = $client->name;
+                        $clientAddress = $client->address;
+                        $clientPhone = $client->phone ?? '';
+                        $clientEmail = $client->email ?? '';
+                    } else {
+                        // Create new client
+                        $client = Client::create([
+                            'name' => $clientName,
+                            'phone' => $clientPhone ?: '-',
+                            'email' => $clientEmail ?: ('no-email-' . now()->timestamp . '@local.test'),
+                            'address' => $clientAddress,
+                        ]);
+                        $clientId = $client->id;
+                    }
+                }
+
+                // Calculate totals
+                $subTotal = 0;
+                foreach ($request->items as $item) {
+                    $lineTotal = $item['quantity'] * $item['unit_price'];
+                    $lineDiscountPercent = (float)($item['discount_percent'] ?? 0);
+                    $lineDiscount = $lineTotal * ($lineDiscountPercent / 100);
+                    $subTotal += ($lineTotal - $lineDiscount);
+                }
+
+                $discountPercent = (float)($request->discount_percent ?? 0);
+                $discountAmount = $subTotal * ($discountPercent / 100);
+                $vatPercent = (float)($request->vat_percent ?? 0);
+                $taxPercent = (float)($request->tax_percent ?? 0);
+                $installationCharge = (float)($request->installation_charge ?? 0);
+                $roundOff = (float)($request->round_off ?? 0);
+
+                $totalAfterDiscount = max(0, $subTotal - $discountAmount);
+                $vatAmount = $totalAfterDiscount * ($vatPercent / 100);
+                $taxAmount = $totalAfterDiscount * ($taxPercent / 100);
+                $totalAmount = $totalAfterDiscount + $vatAmount + $taxAmount + $installationCharge - $roundOff;
+
+                // Update quotation with snapshot fields
+                $quotation->update([
+                    'client_id' => $clientId,
+                    'quotation_date' => now(),
+                    'expiry_date' => now()->addDays(15),
+                    'notes' => $request->subject,
+                    'sub_total' => $subTotal,
+                    'discount_percent' => $discountPercent,
+                    'discount_amount' => $discountAmount,
+                    'vat_percent' => $vatPercent,
+                    'vat_amount' => $vatAmount,
+                    'tax_percent' => $taxPercent,
+                    'tax_amount' => $taxAmount,
+                    'installation_charge' => $installationCharge,
+                    'round_off' => $roundOff,
+                    'total_amount' => $totalAmount,
+                    'status' => $quotation->status, // Keep existing status
+
+                    // PDF snapshot fields
+                    'client_name' => $clientName,
+                    'client_designation' => $request->client_designation,
+                    'client_address' => $clientAddress,
+                    'client_phone' => $clientPhone,
+                    'client_email' => $clientEmail,
+                    'attention_to' => $request->attention_to,
+                    'body_content' => $request->body_content,
+                    'terms_conditions' => $request->terms_conditions,
+                    'subject' => $request->subject,
+                    'company_name' => $request->company_name,
+                    'company_phone' => $request->company_phone,
+                    'company_email' => $request->company_email,
+                    'company_website' => $request->company_website,
+                    'company_address' => $request->company_address,
+                    'logo' => $companyLogo,
+                    'signatory_name' => $signatoryName,
+                    'signatory_designation' => $signatoryDesignation,
+                    'signatory_photo' => $signatoryPhoto,
+                    'additional_enclosed' => $request->additional_enclosed,
                 ]);
-            }
-        });
+
+                // Delete existing items
+                $quotation->items()->delete();
+
+                // Create new quotation items
+                foreach ($request->items as $item) {
+                    $lineTotal = $item['quantity'] * $item['unit_price'];
+                    $lineDiscountPercent = (float)($item['discount_percent'] ?? 0);
+                    $lineDiscount = $lineTotal * ($lineDiscountPercent / 100);
+                    $netTotal = $lineTotal - $lineDiscount;
+
+                    QuotationItem::create([
+                        'quotation_id' => $quotation->id,
+                        'product_id' => $item['product_id'],
+                        'quantity' => $item['quantity'],
+                        'unit_price' => $item['unit_price'],
+                        'discount_percent' => $lineDiscountPercent,
+                        'total' => $netTotal,
+                        'description' => $item['description'] ?? null,
+                    ]);
+                }
+            });
+        } catch (QueryException $e) {
+            return back()->withInput()->with('warning', 'Unable to update quotation right now. Please check client setup and try again.');
+        } catch (\Throwable $e) {
+            return back()->withInput()->with('warning', 'Unable to update quotation right now. Please check client information and try again.');
+        }
 
         return redirect()->route('quotations.index')->with('success', 'Quotation updated successfully.');
     }

@@ -13,6 +13,7 @@ class QuotationItem extends Model
         'description',
         'quantity',
         'unit_price',
+        'discount_percent',
         'total'
     ];
 
