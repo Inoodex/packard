@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: localhost:3306
--- Generation Time: Feb 25, 2026 at 06:18 AM
+-- Generation Time: Apr 05, 2026 at 12:43 PM
 -- Server version: 8.4.3
 -- PHP Version: 8.3.26
 
@@ -43,9 +43,7 @@ CREATE TABLE `clients` (
 
 INSERT INTO `clients` (`id`, `name`, `phone`, `email`, `address`, `created_at`, `updated_at`) VALUES
 (1, 'Ryans Computers', '01256423001', 'ryans@gmail.com', 'Dhaka', '2026-02-24 06:47:44', '2026-02-24 08:53:23'),
-(4, 'Ryans Computers', '01256423001', 'abcd@gmail.com', 'Dhaka', '2026-02-25 04:40:56', '2026-02-25 04:40:56'),
-(5, 'sadfgsadf', '01256423001', 'abcd@gmail.com', 'Dhaka', '2026-02-25 04:44:29', '2026-02-25 04:44:29'),
-(6, 'sadfgsadf', '01256423001', 'abcd@gmail.com', 'Dhaka', '2026-02-25 04:54:39', '2026-02-25 04:54:39');
+(7, 'Md Hasan', '01000000000', 'hasan@inoodex.com', 'Dhaka', '2026-04-05 04:02:21', '2026-04-05 04:02:21');
 
 -- --------------------------------------------------------
 
@@ -74,7 +72,7 @@ CREATE TABLE `company_details` (
 --
 
 INSERT INTO `company_details` (`id`, `name`, `signatory_name`, `signatory_designation`, `phone`, `photo`, `email`, `website`, `address`, `is_default`, `is_active`, `created_at`, `updated_at`) VALUES
-(1, 'Inoodex', NULL, NULL, '012000000', 'uploads/company_details/1771925646_logo-inoodex.png', 'hello@inoodex.com', 'https://www.inoodex.com/', 'Mirpur, Pallabi, Dhaka', 1, 1, '2026-02-24 09:34:06', '2026-02-24 09:35:57');
+(1, 'Inoodex', NULL, NULL, '012000000', 'uploads/company_details/1775385303_logo.png', 'hello@inoodex.com', 'https://www.inoodex.com/', 'Mirpur, Pallabi, Dhaka', 1, 1, '2026-02-24 09:34:06', '2026-04-05 10:35:03');
 
 -- --------------------------------------------------------
 
@@ -141,7 +139,10 @@ INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES
 (46, '2026_02_24_233000_add_signatory_and_photo_to_company_details_table', 10),
 (47, '2026_02_25_095547_add_pdf_fields_to_quotations_table', 11),
 (48, '2026_02_25_100733_add_deleted_at_to_quotations_table', 12),
-(49, '2026_02_25_103024_add_company_logo_to_quotations_table', 13);
+(49, '2026_02_25_103024_add_company_logo_to_quotations_table', 13),
+(50, '2026_04_05_103411_add_unique_constraints_to_clients_table', 14),
+(51, '2026_04_05_105206_add_discount_percent_to_quotations_table', 15),
+(52, '2026_04_05_105247_add_discount_percent_to_quotation_items_table', 15);
 
 -- --------------------------------------------------------
 
@@ -277,8 +278,8 @@ CREATE TABLE `products` (
 --
 
 INSERT INTO `products` (`id`, `name`, `product_code`, `details`, `unit`, `price`, `created_at`, `updated_at`) VALUES
-(1, 'Canon Pixma G4010 All in One Wireless Ink Tank Printer', '123456', 'Test', 'piece', 7000.00, '2026-02-24 04:45:47', '2026-02-24 04:47:14'),
-(2, 'HP DeskJet Ink Advantage 2336 All-in-One Color Printer', '012345', NULL, 'piece', 9000.00, '2026-02-24 05:10:00', '2026-02-24 05:10:00'),
+(1, 'Canon Pixma G4010 All in One Wireless Ink Tank Printer', '123456', 'Test', 'pcs', 7000.00, '2026-02-24 04:45:47', '2026-02-24 04:47:14'),
+(2, 'HP DeskJet Ink Advantage 2336 All-in-One Color Printer', '012345', NULL, 'pcs', 9000.00, '2026-02-24 05:10:00', '2026-02-24 05:10:00'),
 (3, 'Product A', 'P001', 'High-quality material', 'pcs', 120.50, '2026-02-25 05:04:55', '2026-02-25 05:04:55'),
 (4, 'Product B', 'P002', 'Durable and lightweight', 'pcs', 75.00, '2026-02-25 05:04:55', '2026-02-25 05:04:55'),
 (5, 'Product C', 'P003', 'Eco-friendly packaging', 'pcs', 150.00, '2026-02-25 05:04:55', '2026-02-25 05:04:55'),
@@ -312,6 +313,7 @@ CREATE TABLE `quotations` (
   `expiry_date` date NOT NULL,
   `notes` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
   `sub_total` decimal(10,2) NOT NULL,
+  `discount_percent` decimal(5,2) NOT NULL DEFAULT '0.00',
   `discount_amount` decimal(10,2) NOT NULL DEFAULT '0.00',
   `vat_percent` decimal(5,2) NOT NULL DEFAULT '0.00',
   `vat_amount` decimal(12,2) NOT NULL DEFAULT '0.00',
@@ -349,8 +351,9 @@ CREATE TABLE `quotations` (
 -- Dumping data for table `quotations`
 --
 
-INSERT INTO `quotations` (`id`, `quotation_number`, `client_id`, `quotation_date`, `expiry_date`, `notes`, `sub_total`, `discount_amount`, `vat_percent`, `vat_amount`, `tax_percent`, `tax_amount`, `installation_charge`, `round_off`, `total_amount`, `status`, `created_at`, `updated_at`, `client_name`, `client_designation`, `client_address`, `client_phone`, `client_email`, `attention_to`, `body_content`, `terms_conditions`, `subject`, `company_name`, `logo`, `signatory_name`, `signatory_designation`, `signatory_photo`, `company_phone`, `company_email`, `company_website`, `company_address`, `additional_enclosed`, `deleted_at`) VALUES
-(10, 'PK-20260225-0005', 6, '2026-02-25', '2026-03-12', 'Laborum occaecati eaque necessitatibus.', 97716.00, 169.00, 183.00, 178511.01, 0.00, 0.00, 140.00, 563.00, 275635.01, 'draft', '2026-02-25 04:54:39', '2026-02-25 04:54:39', 'sadfgsadf', 'Ullam laudantium impedit quia n', 'Dhaka', '01256423001', 'abcd@gmail.com', 'Quidem odit optio', 'Nostrum dolores accusamus enim autem inventore expedita animi reprehenderit tempore.', 'Voluptatem adipisci architecto voluptate fugiat quis possimus labore ut. Veniam magni alias. Odit repudiandae cum quae necessitatibus possimus quaerat sunt.\r\nTenetur totam officiis ex quibusdam odio. Nam aliquid assumenda cupiditate eius iure. Doloribus unde exercitationem laudantium repudiandae quos.\r\nOdio placeat nostrum voluptatem nemo et. Dolorem sit voluptatibus molestiae culpa eligendi hic neque. Nesciunt sapiente maxime.', 'Laborum occaecati eaque necessitatibus.', 'MacGyver - Krajcik', 'uploads/company_details/1771925646_logo-inoodex.png', 'Mr. Karim', 'Sales Person', 'frontend/users/20260224122504_SrA86C5rqb.png', 'Wiza - O\'Kon', 'your.email+fakedata80539@gmail.com', 'O\'Keefe, Gleichner and Schroeder', 'Mirpur, Pallabi, Dhaka', 'Vitae adipisci provident.', NULL);
+INSERT INTO `quotations` (`id`, `quotation_number`, `client_id`, `quotation_date`, `expiry_date`, `notes`, `sub_total`, `discount_percent`, `discount_amount`, `vat_percent`, `vat_amount`, `tax_percent`, `tax_amount`, `installation_charge`, `round_off`, `total_amount`, `status`, `created_at`, `updated_at`, `client_name`, `client_designation`, `client_address`, `client_phone`, `client_email`, `attention_to`, `body_content`, `terms_conditions`, `subject`, `company_name`, `logo`, `signatory_name`, `signatory_designation`, `signatory_photo`, `company_phone`, `company_email`, `company_website`, `company_address`, `additional_enclosed`, `deleted_at`) VALUES
+(13, 'ryans-0001', 1, '2026-04-05', '2026-04-20', 'sfgh', 15770.00, 3.00, 473.10, 2.50, 382.42, 1.50, 229.45, 0.00, 96.00, 15812.78, 'draft', '2026-04-05 06:22:33', '2026-04-05 10:44:00', 'Ryans Computers', 'sdth', 'Dhaka', '01256423001', 'ryans@gmail.com', 'sdfbghs', 'sdfgh', 'Delivery timeline will be confirmed after order confirmation.\r\n Prices are in BDT.\r\n VAT/TAX are not included unless mentioned.\r\n Payment terms: As per mutual agreement.', 'sfgh', 'Inoodex', 'uploads/company_details/1771925646_logo-inoodex.png', 'Super Admin', 'Super Admin', 'frontend/users/20260224122535_OgONr5JxSR.png', '012000000', 'hello@inoodex.com', 'https://www.inoodex.com/', 'Mirpur, Pallabi, Dhaka', NULL, '2026-04-05 10:44:00'),
+(14, '0001-ryans', 1, '2026-04-05', '2026-04-20', 'Quotation No. 1', 16000.00, 2.00, 320.00, 1.50, 235.20, 0.00, 0.00, 0.00, 80.00, 15835.20, 'draft', '2026-04-05 10:45:55', '2026-04-05 12:10:45', 'Ryans Computers', 'Manager', 'Dhaka', '01256423001', 'ryans@gmail.com', 'Mr. Kamal', 'Test', 'Delivery timeline will be confirmed after order confirmation.\r\n Prices are in BDT.\r\n VAT/TAX are not included unless mentioned.\r\n Payment terms: As per mutual agreement.', 'Quotation No. 1', 'Inoodex', 'uploads/company_details/1775385303_logo.png', 'Super Admin', 'Super Admin', 'frontend/users/20260224122535_OgONr5JxSR.png', '012000000', 'hello@inoodex.com', 'https://www.inoodex.com/', 'Mirpur, Pallabi, Dhaka', NULL, NULL);
 
 -- --------------------------------------------------------
 
@@ -365,6 +368,7 @@ CREATE TABLE `quotation_items` (
   `description` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
   `quantity` int NOT NULL,
   `unit_price` decimal(10,2) NOT NULL,
+  `discount_percent` decimal(5,2) NOT NULL DEFAULT '0.00',
   `total` decimal(10,2) NOT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL
@@ -374,8 +378,11 @@ CREATE TABLE `quotation_items` (
 -- Dumping data for table `quotation_items`
 --
 
-INSERT INTO `quotation_items` (`id`, `quotation_id`, `product_id`, `description`, `quantity`, `unit_price`, `total`, `created_at`, `updated_at`) VALUES
-(11, 10, 2, 'description not available', 479, 204.00, 97716.00, '2026-02-25 04:54:39', '2026-02-25 04:54:39');
+INSERT INTO `quotation_items` (`id`, `quotation_id`, `product_id`, `description`, `quantity`, `unit_price`, `discount_percent`, `total`, `created_at`, `updated_at`) VALUES
+(17, 13, 2, 'description not available', 1, 9000.00, 1.00, 8910.00, '2026-04-05 06:22:33', '2026-04-05 06:22:33'),
+(18, 13, 1, 'Test', 1, 7000.00, 2.00, 6860.00, '2026-04-05 06:22:33', '2026-04-05 06:22:33'),
+(23, 14, 2, 'description not available', 1, 9000.00, 0.00, 9000.00, '2026-04-05 12:10:46', '2026-04-05 12:10:46'),
+(24, 14, 1, 'Test', 1, 7000.00, 0.00, 7000.00, '2026-04-05 12:10:46', '2026-04-05 12:10:46');
 
 -- --------------------------------------------------------
 
@@ -477,7 +484,9 @@ INSERT INTO `users` (`id`, `name`, `email`, `phone`, `email_verified_at`, `passw
 -- Indexes for table `clients`
 --
 ALTER TABLE `clients`
-  ADD PRIMARY KEY (`id`);
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `clients_phone_index` (`phone`),
+  ADD KEY `clients_email_index` (`email`);
 
 --
 -- Indexes for table `company_details`
@@ -584,7 +593,7 @@ ALTER TABLE `users`
 -- AUTO_INCREMENT for table `clients`
 --
 ALTER TABLE `clients`
-  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
 
 --
 -- AUTO_INCREMENT for table `company_details`
@@ -596,7 +605,7 @@ ALTER TABLE `company_details`
 -- AUTO_INCREMENT for table `migrations`
 --
 ALTER TABLE `migrations`
-  MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=50;
+  MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=53;
 
 --
 -- AUTO_INCREMENT for table `permissions`
@@ -620,13 +629,13 @@ ALTER TABLE `products`
 -- AUTO_INCREMENT for table `quotations`
 --
 ALTER TABLE `quotations`
-  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=11;
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=15;
 
 --
 -- AUTO_INCREMENT for table `quotation_items`
 --
 ALTER TABLE `quotation_items`
-  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=12;
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=25;
 
 --
 -- AUTO_INCREMENT for table `roles`

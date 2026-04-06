@@ -14,7 +14,7 @@
         }
 
         body {
-            font-family: Arial, sans-serif;
+            font-family: 'Times New Roman', Times, serif !important;
             font-size: 12px;
             line-height: 1.35;
             color: #000;
@@ -35,7 +35,7 @@
         h6,
         small,
         strong {
-            font-family: Arial, sans-serif !important;
+            font-family: 'Times New Roman', Times, serif !important;
         }
 
         .container {
@@ -138,6 +138,7 @@
             width: 20px;
             border-top: 2px solid #1c0770;
             margin-left: 12px;
+            vertical-align: middle;
         }
 
         .footer-title {
@@ -147,12 +148,14 @@
             color: #1c0770;
             font-size: 18px;
             padding-left: 10px;
+            vertical-align: middle;
         }
 
         .line-full {
             display: table-cell;
             width: 100%;
             border-top: 2px solid #1c0770;
+            vertical-align: middle;
         }
 
         .contact {
