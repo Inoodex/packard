@@ -604,8 +604,23 @@ class QuotationController extends Controller
         $viewRenderedAt = hrtime(true);
 
         $pdf = Pdf::loadHTML($html);
+        // =====================================================
+// ADD THESE OPTIONS — required for multi-page design
+// =====================================================
+// $pdf = Pdf::loadHTML($html)
+//     ->setPaper('a4', 'portrait')
+//     ->setOptions([
+//         'isHtml5ParserEnabled' => true,  // better HTML parsing
+//         'isRemoteEnabled'      => true,  // allows loading image files from disk
+//         'defaultFont'          => 'serif',
+//         'dpi'                  => 150,   // crisp output without being too slow
+//         'isFontSubsettingEnabled' => true,
+//     ]);
+
+// =====================================================
         $pdfBinary = $pdf->output();
         $pdfRenderedAt = hrtime(true);
+
 
         $timings = [
             'load_ms' => round(($loadedAt - $startedAt) / 1_000_000, 2),
