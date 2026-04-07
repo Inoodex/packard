@@ -353,7 +353,7 @@
                                     <td></td>
                                 </tr>
                                 <tr>
-                                    <td colspan="6" class="text-end"><strong>Overall Discount (%)</strong></td>
+                                    <td colspan="6" class="text-end"><strong>Special Discount (%)</strong></td>
                                     <td class="text-end">
                                         <input type="number" name="discount_percent" id="discount-percent"
                                             class="form-control form-control-sm text-end"
@@ -363,21 +363,11 @@
                                     <td></td>
                                 </tr>
                                 <tr>
-                                    <td colspan="6" class="text-end"><strong>VAT (%)</strong></td>
+                                    <td colspan="6" class="text-end"><strong>Round Off (-)</strong></td>
                                     <td class="text-end">
-                                        <input type="number" name="vat_percent" id="vat-percent"
+                                        <input type="number" name="round_off" id="round-off"
                                             class="form-control form-control-sm text-end"
-                                            value="{{ old('vat_percent', $quotation->vat_percent ?? 0) }}" min="0"
-                                            step="0.01">
-                                    </td>
-                                    <td></td>
-                                </tr>
-                                <tr>
-                                    <td colspan="6" class="text-end"><strong>Tax (%)</strong></td>
-                                    <td class="text-end">
-                                        <input type="number" name="tax_percent" id="tax-percent"
-                                            class="form-control form-control-sm text-end"
-                                            value="{{ old('tax_percent', $quotation->tax_percent ?? 0) }}" min="0"
+                                            value="{{ old('round_off', $quotation->round_off ?? 0) }}" min="0"
                                             step="0.01">
                                     </td>
                                     <td></td>
@@ -393,17 +383,27 @@
                                     <td></td>
                                 </tr>
                                 <tr>
-                                    <td colspan="6" class="text-end"><strong>Round Off (-)</strong></td>
+                                    <td colspan="6" class="text-end"><strong>AIT (%)</strong></td>
                                     <td class="text-end">
-                                        <input type="number" name="round_off" id="round-off"
+                                        <input type="number" name="tax_percent" id="tax-percent"
                                             class="form-control form-control-sm text-end"
-                                            value="{{ old('round_off', $quotation->round_off ?? 0) }}" min="0"
+                                            value="{{ old('tax_percent', $quotation->tax_percent ?? 0) }}" min="0"
                                             step="0.01">
                                     </td>
                                     <td></td>
                                 </tr>
                                 <tr>
-                                    <td colspan="6" class="text-end"><strong>Total Amount</strong></td>
+                                    <td colspan="6" class="text-end"><strong>VAT (%)</strong></td>
+                                    <td class="text-end">
+                                        <input type="number" name="vat_percent" id="vat-percent"
+                                            class="form-control form-control-sm text-end"
+                                            value="{{ old('vat_percent', $quotation->vat_percent ?? 0) }}" min="0"
+                                            step="0.01">
+                                    </td>
+                                    <td></td>
+                                </tr>
+                                <tr>
+                                    <td colspan="6" class="text-end"><strong>Grand Total</strong></td>
                                     <td class="text-end"><strong id="grand-total">0.00</strong></td>
                                     <td></td>
                                 </tr>

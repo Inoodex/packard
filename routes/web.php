@@ -21,7 +21,7 @@ Route::middleware(['auth', 'role:Super Admin'])->group(function () {
     // Quotations
     Route::resource('quotations', QuotationController::class);
     Route::get('quotations/{quotation}/pdf', [QuotationController::class, 'generatePDF'])->name('quotations.pdf');
-    // Route::get('quotations/{quotation}/pdf-preview', [QuotationController::class, 'previewPDF'])->name('quotations.pdf.preview');
+    Route::get('quotations/{quotation}/pdf-preview', [QuotationController::class, 'preview'])->name('quotations.pdf.preview');
     Route::get('/quotations/{quotation}/download', [QuotationController::class, 'download'])->name('quotations.download');
     Route::post('quotations/{quotation}/send', [QuotationController::class, 'sendQuotation'])->name('quotations.send');
 

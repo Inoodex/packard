@@ -112,22 +112,29 @@ class Quotation extends Model
             $suffix = 'quo';
         }
 
-        // Search last quotation with same suffix
-        $lastQuotation = static::where('quotation_number', 'like', "%-{$suffix}")
-            ->withTrashed() // include deleted quotations
+        // Get the highest sequence number from ALL quotations (global counter)
+        $lastQuotation = static::withTrashed() // include deleted quotations
             ->orderBy('id', 'desc')
             ->first();
 
         // Extract last sequence number
         $sequence = 1;
         if ($lastQuotation) {
-            // Get the first part before the hyphen
-            $firstPart = explode('-', $lastQuotation->quotation_number)[0];
-            $sequence = (int)$firstPart + 1;
+            // Get the numeric part from the last quotation number
+            $parts = explode('-', $lastQuotation->quotation_number);
+            if (count($parts) === 2 && is_numeric($parts[1])) {
+                $sequence = (int)$parts[1] + 1;
+            } else {
+                // If format doesn't match, try to extract number
+                preg_match('/(\d+)$/', $lastQuotation->quotation_number, $matches);
+                if (!empty($matches)) {
+                    $sequence = (int)$matches[1] + 1;
+                }
+            }
         }
 
-        // Format: 0001-hasan, 0002-rahim, etc.
-        return str_pad($sequence, 4, '0', STR_PAD_LEFT) . "-{$suffix}";
+        // Format: abcd-0001, abcd-0002, bcde-0003, etc.
+        return "{$suffix}-" . str_pad($sequence, 4, '0', STR_PAD_LEFT);
     }
 
 }

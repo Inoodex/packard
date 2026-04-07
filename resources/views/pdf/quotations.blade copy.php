@@ -4,8 +4,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Packard</title>
-
+    <title>Packard - Quotation</title>
     <style>
         * {
             margin: 0;
@@ -32,24 +31,16 @@
         h3,
         h4,
         h5,
-        h6,
-        small,
-        strong {
+        h6 {
             font-family: 'Times New Roman', Times, serif !important;
         }
 
-        /* =============================================
-           PAGE SETUP - Critical for multi-page PDFs
-           ============================================= */
         @page {
             margin: 0;
-            size: A4;
+            size: A4 portrait;
         }
 
-        /* =============================================
-           GREEN SIDEBAR - Uses fixed positioning so it
-           repeats on every page automatically
-           ============================================= */
+        /* Green Sidebar */
         .green-shape-wrapper {
             position: fixed;
             top: 0;
@@ -65,9 +56,7 @@
             display: block;
         }
 
-        /* =============================================
-           HEADER - Fixed so it repeats on every page
-           ============================================= */
+        /* Header */
         .page-header {
             position: fixed;
             top: 0;
@@ -79,7 +68,6 @@
             z-index: 10;
             display: table;
             width: calc(100% - 45px);
-            box-sizing: border-box;
         }
 
         .logo-left {
@@ -127,9 +115,7 @@
             margin-left: 8px;
         }
 
-        /* =============================================
-           FOOTER - Fixed so it repeats on every page
-           ============================================= */
+        /* Footer */
         .page-footer {
             position: fixed;
             bottom: 0;
@@ -139,7 +125,6 @@
             background: #fff;
             z-index: 10;
             width: calc(100% - 45px);
-            box-sizing: border-box;
         }
 
         .footer-line {
@@ -152,7 +137,6 @@
             width: 30px;
             vertical-align: middle;
             border-bottom: 2px solid #1c0770;
-            height: 1px;
         }
 
         .footer-title {
@@ -170,7 +154,6 @@
             width: 100%;
             vertical-align: middle;
             border-bottom: 2px solid #1c0770;
-            height: 1px;
         }
 
         .contact {
@@ -201,11 +184,6 @@
             border-radius: 50%;
         }
 
-        .icon-box img {
-            width: 10px;
-            height: 10px;
-        }
-
         .contact-text {
             display: table-cell;
             font-size: 11px;
@@ -213,15 +191,14 @@
             vertical-align: middle;
         }
 
-        /* =============================================
-           BACKGROUND WATERMARK IMAGE
-           Fixed so it appears on every page
-           ============================================= */
+        /* Background Watermark - MOVED MORE TO THE RIGHT */
         .bg-wrapper {
             position: fixed;
-            right: 0;
+            right: -80px;
+            /* Changed: More to the right (half visible) */
             top: 180px;
-            width: 380px;
+            width: 420px;
+            /* Slightly increased width */
             z-index: 0;
             pointer-events: none;
         }
@@ -231,69 +208,47 @@
             opacity: 0.15;
         }
 
-        /* =============================================
-           MAIN CONTENT AREA
-           Top/bottom padding accounts for fixed header/footer
-           ============================================= */
+        /* Main Content */
         .content-wrapper {
             margin-left: 45px;
-            padding-top: 90px;
-            /* height of fixed header + gap */
-            padding-bottom: 110px;
-            /* height of fixed footer + gap */
+            padding-top: 95px;
+            padding-bottom: 155px;
             padding-left: 30px;
             padding-right: 30px;
             position: relative;
             z-index: 5;
         }
 
-        /* =============================================
-           REFERENCE / DATE
-           ============================================= */
         .reference {
             text-align: right;
-            margin-bottom: 12px;
-        }
-
-        /* =============================================
-           RECIPIENT / TO SECTION
-           ============================================= */
-        .to-section {
-            margin-bottom: 14px;
+            margin-bottom: 20px;
+            font-size: 12px;
         }
 
         .to-section p {
             margin: 2px 0;
         }
 
-        /* =============================================
-           SUBJECT
-           ============================================= */
         .subject {
-            margin: 12px 0;
+            margin: 15px 0;
             font-weight: bold;
         }
 
-        /* =============================================
-           LETTER BODY
-           ============================================= */
         .letter-body {
-            margin: 14px 0;
+            margin: 15px 0;
             text-align: justify;
         }
 
         .additional-enclosed {
-            margin: 12px 0;
+            margin: 15px 0;
         }
 
-        /* =============================================
-           QUOTATION TABLE
-           ============================================= */
+        /* Quotation Table */
         .quotation-title {
             text-align: center;
             font-weight: bold;
             text-decoration: underline;
-            margin: 16px 0;
+            margin: 20px 0 15px 0;
             font-size: 14px;
         }
 
@@ -304,7 +259,7 @@
         }
 
         thead th {
-            border: 1px solid #000 !important;
+            border: 1px solid #000;
             padding: 6px 8px;
             text-align: center;
             background-color: #f0f0f0;
@@ -312,7 +267,7 @@
         }
 
         tbody td {
-            border: 1px solid #000 !important;
+            border: 1px solid #000;
             padding: 6px 8px;
             vertical-align: middle;
         }
@@ -347,53 +302,45 @@
         .total-row td {
             padding-right: 16px;
             text-align: right;
-            font-weight: 600 !important;
-            border: 1px solid #000 !important;
-        }
-
-        .summary-row td {
-            background: transparent !important;
+            font-weight: 600;
         }
 
         .summary-final td {
-            background: transparent !important;
             font-size: 12px;
-            font-weight: bold !important;
+            font-weight: bold;
         }
 
-        /* =============================================
-           AMOUNT IN WORDS
-           ============================================= */
+        /* Amount in Words */
         .amount-in-words {
-            margin: 14px 0;
-            padding: 8px 12px;
+            margin: 18px 0;
+            padding: 10px 12px;
             background-color: #f9f9f9;
             border: 1px solid #ddd;
             font-style: italic;
             text-align: center;
             font-weight: bold;
+            page-break-inside: avoid;
         }
 
-        /* =============================================
-           TERMS TABLE
-           ============================================= */
+        /* Terms & Conditions */
         .terms-title {
             text-align: center;
             font-weight: bold;
             text-decoration: underline;
-            margin: 16px 0 8px 0;
+            margin: 20px 0 10px 0;
+            font-size: 13px;
+            page-break-inside: avoid;
         }
 
         .terms-table {
-            margin: 8px 0;
             width: 100%;
-            border-collapse: collapse;
+            margin-bottom: 30px;
+            page-break-inside: avoid;
         }
 
         .terms-table td {
             vertical-align: top;
-            padding: 4px 6px;
-            border: none !important;
+            padding: 5px 8px;
         }
 
         .terms-table td:first-child {
@@ -401,44 +348,36 @@
             font-weight: bold;
         }
 
-        /* =============================================
-           SIGNATURE SECTION
-           ============================================= */
+        /* Signature */
         .signature-section {
-            margin-top: 50px;
-            margin-bottom: 20px;
+            margin-top: 60px;
+            page-break-inside: avoid;
         }
 
         .signature-content {
-            text-align: left;
             width: 280px;
         }
 
         .signature-line {
             border-top: 1px dashed #000;
             width: 200px;
-            margin: 35px 0 5px 0;
+            margin: 35px 0 8px 0;
         }
     </style>
 </head>
 
 <body>
 
-    {{-- =============================================
-         GREEN SIDEBAR — fixed, repeats every page
-         ============================================= --}}
+    {{-- Green Sidebar --}}
     <div class="green-shape-wrapper">
         @if (!empty($pdf_green_shape) && file_exists($pdf_green_shape))
             <img class="green-shape-img" src="{{ $pdf_green_shape }}" alt="" />
         @else
-            {{-- Fallback: solid green bar if image missing --}}
             <div style="width:45px;height:100%;background:#2d7a2d;"></div>
         @endif
     </div>
 
-    {{-- =============================================
-         HEADER — fixed, repeats every page
-         ============================================= --}}
+    {{-- Header --}}
     <div class="page-header">
         <div class="logo-left">
             <div class="circle-border">
@@ -453,16 +392,13 @@
         </div>
     </div>
 
-    {{-- =============================================
-         FOOTER — fixed, repeats every page
-         ============================================= --}}
+    {{-- Footer --}}
     <div class="page-footer">
         <div class="footer-line">
             <div class="line-small"></div>
             <h1 class="footer-title">{{ $company_name ?? 'N/A' }}</h1>
             <div class="line-full"></div>
         </div>
-
         <div class="contact">
             <div class="contact-item">
                 <div class="contact-item-inner">
@@ -497,30 +433,26 @@
         </div>
     </div>
 
-    {{-- =============================================
-         BACKGROUND WATERMARK — fixed, every page
-         ============================================= --}}
+    {{-- Background Watermark - Half visible, half out --}}
     @if (!empty($pdf_background_logo) && file_exists($pdf_background_logo))
         <div class="bg-wrapper">
             <img class="bg-main" src="{{ $pdf_background_logo }}" alt="" />
         </div>
     @endif
 
-    {{-- =============================================
-         MAIN CONTENT — scrolls normally, paginates
-         ============================================= --}}
+    {{-- Main Content --}}
     <div class="content-wrapper">
 
-        {{-- Reference and Date --}}
+        {{-- Reference & Date - Fixed --}}
         <div class="reference">
-            <div>Ref: {{ $quotation->quotation_number }}</div>
-            <div>{{ $quotation->quotation_date->format('F d, Y') }}</div>
+            <div><strong>Ref:</strong> {{ $quotation->quotation_number ?? 'N/A' }}</div>
+            <div>{{ $quotation->quotation_date?->format('F d, Y') ?? 'N/A' }}</div>
         </div>
 
-        {{-- Recipient Details --}}
+        {{-- Recipient --}}
         <div class="to-section">
             <p>To,</p>
-            @if ($attention_to)
+            @if (!empty($attention_to))
                 <p>{{ $attention_to }}</p>
             @endif
             <p>{{ $client_designation ?? 'N/A' }}</p>
@@ -541,7 +473,7 @@
         </div>
 
         {{-- Additional Enclosed --}}
-        @if ($additional_enclosed)
+        @if (!empty($additional_enclosed))
             <div class="additional-enclosed">
                 <strong>Additional Enclosed Documents:</strong><br>
                 {!! nl2br(e($additional_enclosed)) !!}
@@ -586,102 +518,84 @@
                     </tr>
                 @endforeach
 
-                @php
-                    $subTotal = (float) ($quotation->sub_total ?? 0);
-                    $discountPercent = (float) ($quotation->discount_percent ?? 0);
-                    $discountAmount = (float) ($quotation->discount_amount ?? 0);
-                    $baseAfterDiscount = max(0, $subTotal - $discountAmount);
-                    $installationCharge = (float) ($quotation->installation_charge ?? 0);
-                    $vatPercent = (float) ($quotation->vat_percent ?? 0);
-                    $taxPercent = (float) ($quotation->tax_percent ?? 0);
-                    $vatAmount = (float) ($quotation->vat_amount ?? 0);
-                    if ($vatAmount <= 0 && $vatPercent > 0) {
-                        $vatAmount = $baseAfterDiscount * ($vatPercent / 100);
-                    }
-                    $taxAmount = (float) ($quotation->tax_amount ?? 0);
-                    if ($taxAmount <= 0 && $taxPercent > 0) {
-                        $taxAmount = $baseAfterDiscount * ($taxPercent / 100);
-                    }
-                    $roundOff = (float) ($quotation->round_off ?? 0);
-                @endphp
-
-                <tr class="total-row summary-row">
+                <tr class="total-row">
                     <td colspan="7">GROSS TOTAL (BDT)</td>
-                    <td class="total-price">{{ number_format($subTotal, 2) }}</td>
+                    <td class="total-price">{{ number_format($quotation->sub_total ?? 0, 2) }}</td>
                 </tr>
 
-                @if ($discountPercent > 0)
-                    <tr class="total-row summary-row">
+                @if (($quotation->discount_amount ?? 0) > 0)
+                    <tr class="total-row">
                         <td colspan="7">SPECIAL DISCOUNT
-                            ({{ rtrim(rtrim(number_format($discountPercent, 2), '0'), '.') }}%) (BDT)</td>
-                        <td class="total-price">{{ number_format($discountAmount, 2) }}</td>
+                            ({{ number_format($quotation->discount_percent ?? 0, 2) }}%) (BDT)</td>
+                        <td class="total-price">{{ number_format($quotation->discount_amount ?? 0, 2) }}</td>
                     </tr>
                 @endif
 
-                @if ($roundOff > 0)
-                    <tr class="total-row summary-row">
-                        <td colspan="7">ROUND OFF - (BDT)</td>
-                        <td class="total-price">{{ number_format($roundOff, 2) }}</td>
+                @if (($quotation->round_off ?? 0) > 0)
+                    <tr class="total-row">
+                        <td colspan="7">ROUND OFF (BDT)</td>
+                        <td class="total-price">{{ number_format($quotation->round_off ?? 0, 2) }}</td>
                     </tr>
                 @endif
 
-                @if ($installationCharge > 0)
-                    <tr class="total-row summary-row">
+                @if (($quotation->installation_charge ?? 0) > 0)
+                    <tr class="total-row">
                         <td colspan="7">INSTALLATION CHARGE (BDT)</td>
-                        <td class="total-price">{{ number_format($installationCharge, 2) }}</td>
+                        <td class="total-price">{{ number_format($quotation->installation_charge ?? 0, 2) }}</td>
                     </tr>
                 @endif
 
-                @if ($vatAmount > 0)
-                    <tr class="total-row summary-row">
-                        <td colspan="7">VAT ({{ rtrim(rtrim(number_format($vatPercent, 2), '0'), '.') }}%) (BDT)
-                        </td>
-                        <td class="total-price">{{ number_format($vatAmount, 2) }}</td>
+                @if (($quotation->vat_amount ?? 0) > 0)
+                    <tr class="total-row">
+                        <td colspan="7">VAT ({{ number_format($quotation->vat_percent ?? 0, 2) }}%) (BDT)</td>
+                        <td class="total-price">{{ number_format($quotation->vat_amount ?? 0, 2) }}</td>
                     </tr>
                 @endif
 
-                @if ($taxAmount > 0)
-                    <tr class="total-row summary-row">
-                        <td colspan="7">AIT ({{ rtrim(rtrim(number_format($taxPercent, 2), '0'), '.') }}%) (BDT)
-                        </td>
-                        <td class="total-price">{{ number_format($taxAmount, 2) }}</td>
+                @if (($quotation->tax_amount ?? 0) > 0)
+                    <tr class="total-row">
+                        <td colspan="7">AIT ({{ number_format($quotation->tax_percent ?? 0, 2) }}%) (BDT)</td>
+                        <td class="total-price">{{ number_format($quotation->tax_amount ?? 0, 2) }}</td>
                     </tr>
                 @endif
 
                 <tr class="total-row summary-final">
                     <td colspan="7">GRAND TOTAL (BDT)</td>
-                    <td class="total-price">{{ number_format($quotation->total_amount, 2) }}</td>
+                    <td class="total-price">{{ number_format($quotation->total_amount ?? 0, 2) }}</td>
                 </tr>
             </tbody>
         </table>
 
         {{-- Amount in Words --}}
-        <div class="amount-in-words">
-            In Word: {{ $amount_in_words }}
-        </div>
+        @if (!empty($amount_in_words))
+            <div class="amount-in-words">
+                In Word: {{ $amount_in_words }}
+            </div>
+        @endif
 
         {{-- Terms and Conditions --}}
-        @if ($terms_conditions)
-            <div class="terms-title">Terms and Conditions</div>
-            <table class="terms-table">
-                @foreach (explode("\n", $terms_conditions) as $index => $term)
-                    @if (trim($term))
-                        <tr>
-                            <td>{{ $index + 1 }}.</td>
-                            <td>{{ trim($term) }}</td>
-                        </tr>
-                    @endif
-                @endforeach
-            </table>
+        @if (!empty($terms_conditions))
+            <div style="page-break-inside: avoid;">
+                <div class="terms-title">Terms and Conditions</div>
+                <table class="terms-table">
+                    @foreach (explode("\n", $terms_conditions) as $index => $term)
+                        @if (trim($term))
+                            <tr>
+                                <td>{{ $index + 1 }}.</td>
+                                <td>{{ trim($term) }}</td>
+                            </tr>
+                        @endif
+                    @endforeach
+                </table>
+            </div>
         @endif
 
         {{-- Signature Section --}}
         <div class="signature-section">
             <div class="signature-content">
                 @if (!empty($signatory_photo) && file_exists($signatory_photo))
-                    <p style="margin: 0 0 6px 0;">
-                        <img src="{{ $signatory_photo }}" alt="Digital Signature"
-                            style="max-height: 70px; max-width: 180px;">
+                    <p style="margin-bottom: 8px;">
+                        <img src="{{ $signatory_photo }}" alt="Signature" style="max-height: 70px; max-width: 180px;">
                     </p>
                 @endif
                 <div class="signature-line"></div>
@@ -691,7 +605,7 @@
             </div>
         </div>
 
-    </div>{{-- end .content-wrapper --}}
+    </div>
 
 </body>
 

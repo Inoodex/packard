@@ -88,13 +88,13 @@
                                                         <i class="far fa-eye me-2"></i>View
                                                     </a>
                                                 </li>
-                                                {{-- <li>
+                                                <li>
                                                     <a class="dropdown-item"
                                                         href="{{ route('quotations.pdf.preview', $quotation->id) }}"
                                                         target="_blank">
                                                         <i class="far fa-file-pdf me-2"></i>Preview PDF
                                                     </a>
-                                                </li> --}}
+                                                </li>
                                                 <li>
                                                     <a class="dropdown-item"
                                                         href="{{ route('quotations.pdf', $quotation->id) }}">

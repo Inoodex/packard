@@ -282,7 +282,7 @@ class QuotationController extends Controller
         $products = Schema::hasTable('products')
             ? Product::query()->get()
             : collect();
-        $quotation->load('items');
+        $quotation->load('items.product');
 
         return view('frontend.pages.quotations.edit', compact('quotation', 'clients', 'products', 'signatories', 'defaultCompany'));
     }
@@ -500,12 +500,242 @@ class QuotationController extends Controller
     {
         $quotation->load(['client', 'items.product']);
         $amount_in_words = $this->convertNumberToWords($quotation->total_amount) . ' Taka Only';
-        $pdf = PDF::loadView('pdf.quotations', compact('quotation'));
+        $pdf = Pdf::loadView('pdf.quotations', compact('quotation'));
         return $pdf->download($quotation->quotation_number . '.pdf');
-
     }
 
-    public function generatePDF(Quotation $quotation)
+    public function preview(Quotation $quotation)
+    {
+        $quotation->load(['items.product', 'client']);
+
+        $amount_in_words = $this->convertNumberToWords($quotation->total_amount) . ' Taka Only';
+
+        $defaultCompany = CompanyDetail::where('is_default', true)->first();
+        $companyLogo = $this->resolvePublicFilePath($quotation->logo ?: ($defaultCompany->photo ?? null));
+        $pdfHeaderLogo = $this->optimizeImageForPdf(
+            public_path('assets/invoice/assets/logo.png'),
+            'packard-header-logo',
+            420
+        );
+        $pdfGreenShape = $this->resolvePublicFilePath('assets/invoice/assets/left_side.png');
+        $pdfBackgroundLogo = $this->resolvePublicFilePath('assets/invoice/assets/dotted-logo.png');
+        $pdfPhoneIcon = $this->optimizeImageForPdf(
+            public_path('assets/invoice/assets/telephone.png'),
+            'packard-phone-icon',
+            24
+        );
+        $pdfPhoneIcon = $this->makeIconWhiteForPdf($pdfPhoneIcon, 'packard-phone-icon-white');
+        $pdfEmailIcon = $this->optimizeImageForPdf(
+            public_path('assets/invoice/assets/email.png'),
+            'packard-email-icon',
+            24
+        );
+        $pdfEmailIcon = $this->makeIconWhiteForPdf($pdfEmailIcon, 'packard-email-icon-white');
+        $pdfLocationIcon = $this->optimizeImageForPdf(
+            public_path('assets/invoice/assets/location.png'),
+            'packard-location-icon',
+            24
+        );
+        $pdfLocationIcon = $this->makeIconWhiteForPdf($pdfLocationIcon, 'packard-location-icon-white');
+
+        $signatoryPhotoRaw = $quotation->signatory_photo;
+        if (empty($signatoryPhotoRaw) && !empty($quotation->signatory_user_id)) {
+            $signatoryUser = User::query()
+                ->select(['id', 'photo', 'images'])
+                ->find($quotation->signatory_user_id);
+
+            if ($signatoryUser) {
+                if (!empty($signatoryUser->photo)) {
+                    $signatoryPhotoRaw = $signatoryUser->photo;
+                } elseif (!empty($signatoryUser->images)) {
+                    $signatoryPhotoRaw = 'frontend/users/' . $signatoryUser->images;
+                }
+            }
+        }
+
+        $signatoryPhoto = $this->resolvePublicFilePath($signatoryPhotoRaw);
+
+        $data = [
+            'quotation' => $quotation,
+            'amount_in_words' => $amount_in_words,
+
+            // Client snapshot
+            'client_name' => $quotation->client_name,
+            'client_designation' => $quotation->client_designation,
+            'client_address' => $quotation->client_address,
+            'client_phone' => $quotation->client_phone,
+            'client_email' => $quotation->client_email,
+
+            // PDF content
+            'attention_to' => $quotation->attention_to,
+            'body_content' => $quotation->body_content,
+            'terms_conditions' => $quotation->terms_conditions,
+            'subject' => $quotation->subject,
+
+            // Company snapshot
+            'company_name' => $quotation->company_name,
+            'company_phone' => $quotation->company_phone,
+            'company_email' => $quotation->company_email,
+            'company_website' => $quotation->company_website,
+            'company_address' => $quotation->company_address,
+            'company_logo' => $companyLogo,
+            'pdf_header_logo' => $pdfHeaderLogo,
+            'pdf_background_logo' => $pdfBackgroundLogo,
+            'pdf_green_shape' => $pdfGreenShape,
+            'pdf_phone_icon' => $pdfPhoneIcon,
+            'pdf_email_icon' => $pdfEmailIcon,
+            'pdf_location_icon' => $pdfLocationIcon,
+
+            // Signatory snapshot
+            'signatory_name' => $quotation->signatory_name,
+            'signatory_designation' => $quotation->signatory_designation,
+            'signatory_photo' => $this->optimizeImageForPdf($signatoryPhoto, 'quotation-signatory-' . $quotation->id, 220),
+
+            'additional_enclosed' => $quotation->additional_enclosed,
+        ];
+
+        $pdf = Pdf::loadView('pdf.quotations', $data);
+        return $pdf->stream($quotation->quotation_number . '.pdf');
+    }
+
+    // public function generatePDF(Quotation $quotation)
+    // {
+    //     $startedAt = hrtime(true);
+
+    //     $quotation->load(['items.product', 'client']);
+    //     $loadedAt = hrtime(true);
+
+    //     $amount_in_words = $this->convertNumberToWords($quotation->total_amount) . ' Taka Only';
+
+    //     $defaultCompany = CompanyDetail::where('is_default', true)->first();
+    //     $companyLogo = $this->resolvePublicFilePath($quotation->logo ?: ($defaultCompany->photo ?? null));
+    //     $pdfHeaderLogo = $this->optimizeImageForPdf(
+    //         public_path('assets/invoice/assets/logo.png'),
+    //         'packard-header-logo',
+    //         420
+    //     );
+    //     $pdfGreenShape = $this->resolvePublicFilePath('assets/invoice/assets/left_side.png');
+    //     $pdfBackgroundLogo = $this->resolvePublicFilePath('assets/invoice/assets/dotted-logo.png');
+    //     $pdfPhoneIcon = $this->optimizeImageForPdf(
+    //         public_path('assets/invoice/assets/telephone.png'),
+    //         'packard-phone-icon',
+    //         24
+    //     );
+    //     $pdfPhoneIcon = $this->makeIconWhiteForPdf($pdfPhoneIcon, 'packard-phone-icon-white');
+    //     $pdfEmailIcon = $this->optimizeImageForPdf(
+    //         public_path('assets/invoice/assets/email.png'),
+    //         'packard-email-icon',
+    //         24
+    //     );
+    //     $pdfEmailIcon = $this->makeIconWhiteForPdf($pdfEmailIcon, 'packard-email-icon-white');
+    //     $pdfLocationIcon = $this->optimizeImageForPdf(
+    //         public_path('assets/invoice/assets/location.png'),
+    //         'packard-location-icon',
+    //         24
+    //     );
+    //     $pdfLocationIcon = $this->makeIconWhiteForPdf($pdfLocationIcon, 'packard-location-icon-white');
+
+    //     $signatoryPhotoRaw = $quotation->signatory_photo;
+    //     if (empty($signatoryPhotoRaw) && !empty($quotation->signatory_user_id)) {
+    //         $signatoryUser = User::query()
+    //             ->select(['id', 'photo', 'images'])
+    //             ->find($quotation->signatory_user_id);
+
+    //         if ($signatoryUser) {
+    //             if (!empty($signatoryUser->photo)) {
+    //                 $signatoryPhotoRaw = $signatoryUser->photo;
+    //             } elseif (!empty($signatoryUser->images)) {
+    //                 $signatoryPhotoRaw = 'frontend/users/' . $signatoryUser->images;
+    //             }
+    //         }
+    //     }
+
+    //     $signatoryPhoto = $this->resolvePublicFilePath($signatoryPhotoRaw);
+    //     $assetsResolvedAt = hrtime(true);
+
+    //     $data = [
+    //         'quotation' => $quotation,
+    //         'amount_in_words' => $amount_in_words,
+
+    //         // Client snapshot
+    //         'client_name' => $quotation->client_name,
+    //         'client_designation' => $quotation->client_designation,
+    //         'client_address' => $quotation->client_address,
+    //         'client_phone' => $quotation->client_phone,
+    //         'client_email' => $quotation->client_email,
+
+    //         // PDF content
+    //         'attention_to' => $quotation->attention_to,
+    //         'body_content' => $quotation->body_content,
+    //         'terms_conditions' => $quotation->terms_conditions,
+    //         'subject' => $quotation->subject,
+
+    //         // Company snapshot
+    //         'company_name' => $quotation->company_name,
+    //         'company_phone' => $quotation->company_phone,
+    //         'company_email' => $quotation->company_email,
+    //         'company_website' => $quotation->company_website,
+    //         'company_address' => $quotation->company_address,
+    //         'company_logo' => $companyLogo,
+    //         'pdf_header_logo' => $pdfHeaderLogo,
+    //         'pdf_background_logo' => $pdfBackgroundLogo,
+    //         'pdf_green_shape' => $pdfGreenShape,
+    //         // 'pdf_dotted_background' => $pdfDottedBackground,
+    //         'pdf_phone_icon' => $pdfPhoneIcon,
+    //         'pdf_email_icon' => $pdfEmailIcon,
+    //         'pdf_location_icon' => $pdfLocationIcon,
+
+    //         // Signatory snapshot
+    //         'signatory_name' => $quotation->signatory_name,
+    //         'signatory_designation' => $quotation->signatory_designation,
+    //         'signatory_photo' => $this->optimizeImageForPdf($signatoryPhoto, 'quotation-signatory-' . $quotation->id, 220),
+
+    //         'additional_enclosed' => $quotation->additional_enclosed,
+    //     ];
+
+    //     $html = view('pdf.quotations', $data)->render();
+    //     $viewRenderedAt = hrtime(true);
+
+    //     $pdf = Pdf::loadHTML($html);
+
+    //     $pdfBinary = $pdf->output();
+    //     $pdfRenderedAt = hrtime(true);
+
+
+    //     $timings = [
+    //         'load_ms' => round(($loadedAt - $startedAt) / 1_000_000, 2),
+    //         'asset_ms' => round(($assetsResolvedAt - $loadedAt) / 1_000_000, 2),
+    //         'view_ms' => round(($viewRenderedAt - $assetsResolvedAt) / 1_000_000, 2),
+    //         'pdf_ms' => round(($pdfRenderedAt - $viewRenderedAt) / 1_000_000, 2),
+    //         'total_ms' => round(($pdfRenderedAt - $startedAt) / 1_000_000, 2),
+    //     ];
+
+    //     logger()->info('Quotation PDF timing', [
+    //         'quotation_id' => $quotation->id,
+    //         'quotation_number' => $quotation->quotation_number,
+    //         'items_count' => $quotation->items->count(),
+    //         'html_bytes' => strlen($html),
+    //         'pdf_bytes' => strlen($pdfBinary),
+    //         'header_logo_kb' => $this->fileSizeInKb($pdfHeaderLogo),
+    //         'background_logo_kb' => $this->fileSizeInKb($pdfBackgroundLogo),
+    //         'green_shape_kb' => $this->fileSizeInKb($pdfGreenShape),
+    //         // 'dotted_background_kb' => $this->fileSizeInKb($pdfDottedBackground),
+    //         'phone_icon_kb' => $this->fileSizeInKb($pdfPhoneIcon),
+    //         'email_icon_kb' => $this->fileSizeInKb($pdfEmailIcon),
+    //         'location_icon_kb' => $this->fileSizeInKb($pdfLocationIcon),
+    //         'company_logo_kb' => $this->fileSizeInKb($companyLogo),
+    //         'signatory_photo_kb' => $this->fileSizeInKb($signatoryPhoto),
+    //         'timings_ms' => $timings,
+    //     ]);
+
+    //     return response($pdfBinary, 200, [
+    //         'Content-Type' => 'application/pdf',
+    //         'Content-Disposition' => 'attachment; filename="' . $quotation->quotation_number . '.pdf"',
+    //         'X-Quotation-Pdf-Timing' => json_encode($timings),
+    //     ]);
+    // }
+
+     public function generatePDF(Quotation $quotation)
     {
         $startedAt = hrtime(true);
 
@@ -603,21 +833,13 @@ class QuotationController extends Controller
         $html = view('pdf.quotations', $data)->render();
         $viewRenderedAt = hrtime(true);
 
-        $pdf = Pdf::loadHTML($html);
-        // =====================================================
-// ADD THESE OPTIONS — required for multi-page design
-// =====================================================
-// $pdf = Pdf::loadHTML($html)
-//     ->setPaper('a4', 'portrait')
-//     ->setOptions([
-//         'isHtml5ParserEnabled' => true,  // better HTML parsing
-//         'isRemoteEnabled'      => true,  // allows loading image files from disk
-//         'defaultFont'          => 'serif',
-//         'dpi'                  => 150,   // crisp output without being too slow
-//         'isFontSubsettingEnabled' => true,
-//     ]);
+        // $pdf = Pdf::loadHTML($html);
+        $pdf = Pdf::loadHTML($html)
+            ->setOption('isPhpEnabled', true)
+            ->setOption('isHtml5ParserEnabled', true)
+            ->setOption('isRemoteEnabled', true)
+            ->setPaper('a4', 'portrait');
 
-// =====================================================
         $pdfBinary = $pdf->output();
         $pdfRenderedAt = hrtime(true);
 
@@ -647,6 +869,8 @@ class QuotationController extends Controller
             'signatory_photo_kb' => $this->fileSizeInKb($signatoryPhoto),
             'timings_ms' => $timings,
         ]);
+
+        // return response($html, 200, ['Content-Type' => 'text/html']);
 
         return response($pdfBinary, 200, [
             'Content-Type' => 'application/pdf',
@@ -821,51 +1045,6 @@ class QuotationController extends Controller
 
         return is_file($cachedPath) ? $cachedPath : $path;
     }
-
-    // public function generatePDF(Quotation $quotation)
-    // {
-    //     $quotation->load(['items.product']);
-
-    //     $pdfData = session('quotation_pdf_data_' . $quotation->id, []);
-    //     $defaultCompany = Schema::hasTable('company_details')
-    //         ? CompanyDetail::query()->where('is_default', true)->first()
-    //         : null;
-    //     $signatoryDesignation = $pdfData['signatory_designation'] ?? '';
-    //     if ($signatoryDesignation === '' && !empty($pdfData['signatory_user_id'])) {
-    //         $signatoryDesignation = (string) optional(
-    //             User::query()->find($pdfData['signatory_user_id'])?->roles()->orderBy('name')->first()
-    //         )->name;
-    //     }
-
-    //     $amount_in_words = $this->convertNumberToWords($quotation->total_amount) . ' Taka Only';
-
-    //     $data = [
-    //         'quotation' => $quotation,
-    //         'amount_in_words' => $amount_in_words,
-    //         'client_name' => $pdfData['client_name'] ?? '',
-    //         'client_designation' => $pdfData['client_designation'] ?? '',
-    //         'client_address' => $pdfData['client_address'] ?? '',
-    //         'client_phone' => $pdfData['client_phone'] ?? '',
-    //         'client_email' => $pdfData['client_email'] ?? '',
-    //         'attention_to' => $pdfData['attention_to'] ?? '',
-    //         'body_content' => $pdfData['body_content'] ?? '',
-    //         'terms_conditions' => $pdfData['terms_conditions'] ?? '',
-    //         'subject' => $pdfData['subject'] ?? '',
-    //         'company_name' => $pdfData['company_name'] ?? ($defaultCompany->name ?? ''),
-    //         'signatory_name' => $pdfData['signatory_name'] ?? '',
-    //         'signatory_designation' => $signatoryDesignation,
-    //         'signatory_photo' => $pdfData['signatory_photo'] ?? '',
-    //         'company_phone' => $pdfData['company_phone'] ?? ($defaultCompany->phone ?? ''),
-    //         'company_email' => $pdfData['company_email'] ?? ($defaultCompany->email ?? ''),
-    //         'company_website' => $pdfData['company_website'] ?? ($defaultCompany->website ?? ''),
-    //         'company_address' => $pdfData['company_address'] ?? ($defaultCompany->address ?? ''),
-    //         'company_photo' => $defaultCompany->photo ?? '',
-    //         'additional_enclosed' => $pdfData['additional_enclosed'] ?? '',
-    //     ];
-
-    //     $pdf = Pdf::loadView('pdf.quotations', $data);
-    //     return $pdf->download('quotation-' . $quotation->quotation_number . '.pdf');
-    // }
 
     public function sendQuotation(Quotation $quotation)
     {
