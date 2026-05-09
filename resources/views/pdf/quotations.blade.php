@@ -65,12 +65,14 @@
             width: 100%;
             height: 297mm; /* Full A4 height to cover the whole page */
             z-index: -1;
+            text-align: center; /* Center the image horizontally if it overflows */
+            overflow: hidden;
         }
 
         .bg-image {
-            width: 100%;
             height: 100%;
-            display: block;
+            width: auto;
+            display: inline-block;
         }
 
         /* Main Content */

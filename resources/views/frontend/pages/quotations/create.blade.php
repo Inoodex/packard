@@ -82,6 +82,7 @@
     </style>
 
     @php
+        $defaultBody = "Dear Sir,\nWith reference to the above inquiry, we are pleased to offer our most competitive price for your kind consideration as follows.";
         $defaultTerms =
             " Delivery timeline will be confirmed after order confirmation.\n Prices are in BDT.\n VAT/TAX are not included unless mentioned.\n Payment terms: As per mutual agreement.";
         $hasClients = isset($clients) && $clients->count() > 0;
@@ -192,7 +193,7 @@
                         </div>
                         <div class="col-12">
                             <label class="form-label">Body Content</label>
-                            <textarea name="body_content" class="form-control" rows="8">{{ old('body_content') }}</textarea>
+                            <textarea name="body_content" class="form-control" rows="8">{{ old('body_content', $defaultBody) }}</textarea>
                         </div>
                         <div class="col-12">
                             <label class="form-label">Terms & Conditions *</label>
