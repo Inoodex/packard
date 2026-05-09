@@ -8,7 +8,7 @@
     <style>
         @page {
             size: A4 portrait;
-            margin: 140px 15px 105px 0;
+            margin: 140px -15px 105px 0;
         }
     </style>
     <style>
@@ -277,11 +277,11 @@
             margin-top: 18px;
         }
 
-.post-table-page-break {
-    page-break-before: always;
-    margin-top: 0;
-    /* remove padding-top — same reason */
-}
+        .post-table-page-break {
+            page-break-before: always;
+            margin-top: 0;
+            /* remove padding-top — same reason */
+        }
 
         .post-table-page-break .amount-in-words {
             margin-top: 0;
