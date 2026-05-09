@@ -31,10 +31,10 @@
     <meta property="og:image:type" content="image/png">
     <meta property="og:image:width" content="1200">
     <meta property="og:image:height" content="600">
-    <title>Inoodex Inventory</title>
+    <title>Packard | Quotation Management</title>
 
     <!-- Favicon -->
-    <link rel="shortcut icon" href="{{ asset('assets') }}/img/logo.png">
+    <link rel="shortcut icon" href="{{ asset('frontend/favicon-32x32.png') }}">
 
     <!-- Bootstrap CSS -->
     <link rel="stylesheet" href="{{ asset('assets') }}/css/bootstrap.min.css">
@@ -627,9 +627,9 @@
         <div class="login-wrapper">
             <div class="container">
 
-                <img class="img-fluid logo-dark mb-2 logo-color" src="{{ asset('assets') }}/img/logo.png"
+                <img class="img-fluid logo-dark mb-2 logo-color" src="{{ asset('frontend/packard_logo.png') }}"
                     alt="Logo">
-                <img class="img-fluid logo-light mb-2" src="{{ asset('assets') }}/img/logo.png" alt="Logo">
+                <img class="img-fluid logo-light mb-2" src="{{ asset('frontend/packard_logo.png') }}" alt="Logo">
                 <div class="loginbox">
 
                     <div class="login-right">

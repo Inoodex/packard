@@ -21,10 +21,10 @@
         <meta property="og:image:type" content="image/png">
         <meta property="og:image:width" content="1200" >
         <meta property="og:image:height" content="600" > 
-		<title>Inoodex Inventory</title>
+		<title>Packard | Quotation Management</title>
 		
 		<!-- Favicon -->
-		<link rel="shortcut icon" href="{{asset('assets')}}/img/logo.png">
+		<link rel="shortcut icon" href="{{ asset('frontend/favicon-32x32.png') }}">
 		
 		<!-- Bootstrap CSS -->
 		<link rel="stylesheet" href="{{asset('assets')}}/css/bootstrap.min.css">

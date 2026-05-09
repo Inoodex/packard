@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <meta charset="UTF-8" />
     <title>ঘ্যাচাং - আদিল মোর্শেদ | Ghechang | Bedouin</title>
-    <link rel="shortcut icon" href="" />
+    <link rel="shortcut icon" href="{{ asset('frontend/favicon-32x32.png') }}" />
     <link rel="preload" href="/wp-content/themes/wp_oswad_market-child/fonts/hind-siliguri-v7-bengali-regular.woff2" as="font" type="font/woff2" crossorigin>
     <meta name="description" content="সত্যায়ন প্রকাশন থেকে প্রকাশিত আদিল মোর্শেদ এর ঘ্যাচাং বইটি ওয়াফিলাইফ থেকে কিনুন সেরা অফার, সেরা ছাড়ে! রয়েছে সারাদেশে ক্যাশ অন ডেলিভারি এবং হোম ডেলিভারির সুবিধা।" />
     <style type="text/css">

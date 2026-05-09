@@ -117,7 +117,7 @@
                         @forelse($products as $key => $product)
                             <tr>
                                 <td>{{ $products->firstItem() + $key }}</td>
-                                <td>{{ $product->name }}</td>
+                                <td>{{ Str::limit($product->name, 140) }}</td>
                                 <td>{{ $product->product_code }}</td>
                                 <td>{{ ucfirst($product->unit) }}</td>
                                 <td>{{ number_format($product->price, 2) }}</td>

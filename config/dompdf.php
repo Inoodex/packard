@@ -8,5 +8,3 @@ return [
     'default_paper_size' => 'a4',
     'default_font' => 'Century Gothic',
 ];
-
- 

@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Packard - Quotation</title>
+    <title>Packard | Quotation Management</title>
     <style>
 
         @font-face {
@@ -48,10 +48,13 @@
             font-family: 'Century Gothic', sans-serif !important;
         }
 
-        @page {
-            margin: 0;
-            size: A4 portrait;
-        }
+@page {
+    size: A4 portrait;
+    margin-top: 180pt;
+    margin-bottom: 90pt;
+    margin-left: 0;
+    margin-right: 0;
+}
 
         :root {
             --pdf-top-safe-space: 120px;
@@ -93,14 +96,15 @@
         }
 
         /* Main Content */
-        .content-wrapper {
-            padding-top: var(--pdf-top-safe-space);
-            padding-bottom: var(--pdf-bottom-safe-space);
-            padding-left: var(--pdf-side-safe-space);
-            padding-right: var(--pdf-side-safe-space);
-            position: relative;
-            z-index: 5;
-        }
+.content-wrapper {
+    /* remove padding-top  — @page margin-top handles every page now */
+    /* remove padding-bottom — @page margin-bottom handles every page now */
+    padding-left: var(--pdf-side-safe-space);
+    padding-right: var(--pdf-side-safe-space);
+    position: relative;
+    z-index: 5;
+}
+
 
         .reference {
             text-align: right;
@@ -282,9 +286,9 @@
             font-weight: bold;
             page-break-inside: avoid;
             font-family: 'Century Gothic', sans-serif !important;
-            width: 90%;
-            margin-left: 22px;
-            margin-right: 0;
+            width: calc(100% - var(--pdf-left-offset) - var(--pdf-right-offset));
+            margin-left: var(--pdf-left-offset);
+            margin-right: var(--pdf-right-offset);
         }
 
         /* .amount-words-row td {
@@ -364,11 +368,11 @@
             margin-top: 18px;
         }
 
-        .post-table-page-break {
-            page-break-before: always;
-            margin-top: 0;
-            padding-top: var(--pdf-top-safe-space);
-        }
+.post-table-page-break {
+    page-break-before: always;
+    margin-top: 0;
+    /* remove padding-top — same reason */
+}
 
         .post-table-page-break .amount-in-words {
             margin-top: 0;
@@ -395,38 +399,18 @@
                 ? $quotation->items->values()
                 : collect($quotation->items)->values();
 
-        $firstPageLimit = 4;
-        $overflowPageLimit = 10;
+        // $firstPageLimit = 4;
+        // $overflowPageLimit = 10;
 
         $itemPages = [];
         $serial = 1;
 
-        if ($productItems->count() <= $firstPageLimit) {
-            $itemPages[] = [
-                'items' => $productItems,
-                'serial_start' => $serial,
-            ];
-        } else {
-            $firstChunk = $productItems->slice(0, $firstPageLimit)->values();
-            $itemPages[] = [
-                'items' => $firstChunk,
-                'serial_start' => $serial,
-            ];
-
-            $serial += $firstChunk->count();
-            $remainingItems = $productItems->slice($firstPageLimit)->values();
-
-            foreach ($remainingItems->chunk($overflowPageLimit) as $chunk) {
-                $chunk = $chunk->values();
-
-                $itemPages[] = [
-                    'items' => $chunk,
-                    'serial_start' => $serial,
-                ];
-
-                $serial += $chunk->count();
-            }
-        }
+        // First-page and overflow product limits are temporarily disabled.
+        // Keep all items in one flow and let the PDF renderer paginate naturally.
+        $itemPages[] = [
+            'items' => $productItems,
+            'serial_start' => $serial,
+        ];
 
         if (empty($itemPages)) {
             $itemPages[] = [
@@ -467,8 +451,7 @@
 
                 {{-- Subject --}}
                 <div class="subject">
-                    Sub: <span
-                        style="text-decoration: underline;">{{ $subject ?? 'Quotation for Supplying of Products/Services' }}</span>
+                    Subject: <span>{{ $subject ?? 'Quotation for Supplying of Products/Services' }}</span>
                 </div>
 
                 {{-- Letter Body --}}

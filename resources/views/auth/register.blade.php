@@ -89,14 +89,14 @@
         <!-- The above 6 meta tags *must* come first in the head; any other head content must come *after* these tags -->
         
         <!-- Title -->
-        <title>Bashundhara Foundation-Admin Dashboard</title>
+        <title>Packard | Quotation Management</title>
 
         <!-- Styles -->
         <link href="https://fonts.googleapis.com/css?family=Poppins:400,500,700,800&display=swap" rel="stylesheet">
         <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet">
         <link href="../../assets/plugins/font-awesome/css/all.min.css" rel="stylesheet">
         <link href="{{ asset('frontend/login') }}/perfect-scrollbar.css" rel="stylesheet">
-        <link rel="shortcut icon" href="{{ asset('frontend') }}/images/webLogo/Logo/Bashundhara-Foundation-LOGO-MARK.png" />
+        <link rel="shortcut icon" href="{{ asset('frontend/favicon-32x32.png') }}" />
     
         <!-- Theme Styles -->
         <link href="{{ asset('frontend/login') }}/main.min.css" rel="stylesheet">

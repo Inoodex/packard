@@ -720,7 +720,7 @@ class QuotationController extends Controller
         $amount_in_words = $this->convertNumberToWords($quotation->total_amount) . ' Taka Only';
 
         $pdfBackgroundImage = $this->optimizeImageForPdf(
-            public_path('frontend/packard_bg.png'),
+            public_path('frontend/packard_bg_2.png'),
             'packard-background',
             2000,
             95
@@ -782,11 +782,12 @@ class QuotationController extends Controller
         $html = view('pdf.quotations', $data)->render();
         $viewRenderedAt = hrtime(true);
 
-        $pdf = Pdf::loadHTML($html)
-            ->setOption('isPhpEnabled', true)
-            ->setOption('isHtml5ParserEnabled', true)
-            ->setOption('isRemoteEnabled', true)
-            ->setPaper('a4', 'portrait');
+$pdf = Pdf::loadHTML($html)
+    ->setOption('isPhpEnabled', true)
+    ->setOption('isHtml5ParserEnabled', true)
+    ->setOption('isRemoteEnabled', true)
+    ->setPaper('a4', 'portrait');
+    // no margin setOptions needed — CSS @page handles it
 
         $pdfBinary = $pdf->output();
         $pdfRenderedAt = hrtime(true);
