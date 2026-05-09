@@ -498,78 +498,23 @@ class QuotationController extends Controller
 
     public function download(Quotation $quotation)
     {
-        $quotation->load(['client', 'items.product']);
-        $amount_in_words = $this->convertNumberToWords($quotation->total_amount) . ' Taka Only';
-        $pdf = Pdf::loadView('pdf.quotations', compact('quotation'));
+        $data = $this->preparePdfData($quotation);
+        $pdf = Pdf::loadView('pdf.quotations', $data)
+            ->setOption('isPhpEnabled', true)
+            ->setOption('isHtml5ParserEnabled', true)
+            ->setOption('isRemoteEnabled', true)
+            ->setPaper('a4', 'portrait');
         return $pdf->download($quotation->quotation_number . '.pdf');
     }
 
     public function preview(Quotation $quotation)
     {
-        $quotation->load(['items.product', 'client']);
-
-        $amount_in_words = $this->convertNumberToWords($quotation->total_amount) . ' Taka Only';
-
-        $pdfBackgroundImage = $this->optimizeImageForPdf(
-            public_path('frontend/packard_bg.png'),
-            'packard-background',
-            2000,
-            95
-        );
-
-        $signatoryPhotoRaw = $quotation->signatory_photo;
-        if (empty($signatoryPhotoRaw) && !empty($quotation->signatory_user_id)) {
-            $signatoryUser = User::query()
-                ->select(['id', 'photo', 'images'])
-                ->find($quotation->signatory_user_id);
-
-            if ($signatoryUser) {
-                if (!empty($signatoryUser->photo)) {
-                    $signatoryPhotoRaw = $signatoryUser->photo;
-                } elseif (!empty($signatoryUser->images)) {
-                    $signatoryPhotoRaw = 'frontend/users/' . $signatoryUser->images;
-                }
-            }
-        }
-
-        $signatoryPhoto = $this->resolvePublicFilePath($signatoryPhotoRaw);
-
-        $data = [
-            'quotation' => $quotation,
-            'amount_in_words' => $amount_in_words,
-
-            // Client snapshot
-            'client_name' => $quotation->client_name,
-            'client_designation' => $quotation->client_designation,
-            'client_address' => $quotation->client_address,
-            'client_phone' => $quotation->client_phone,
-            'client_email' => $quotation->client_email,
-
-            // PDF content
-            'attention_to' => $quotation->attention_to,
-            'body_content' => $quotation->body_content,
-            'terms_conditions' => $quotation->terms_conditions,
-            'subject' => $quotation->subject,
-
-            // Company snapshot
-            'company_name' => $quotation->company_name,
-            'company_phone' => $quotation->company_phone,
-            'company_email' => $quotation->company_email,
-            'company_website' => $quotation->company_website,
-            'company_address' => $quotation->company_address,
-
-            // Background image
-            'pdf_background_image' => $pdfBackgroundImage,
-
-            // Signatory snapshot
-            'signatory_name' => $quotation->signatory_name,
-            'signatory_designation' => $quotation->signatory_designation,
-            'signatory_photo' => $this->optimizeImageForPdf($signatoryPhoto, 'quotation-signatory-' . $quotation->id, 220),
-
-            'additional_enclosed' => $quotation->additional_enclosed,
-        ];
-
-        $pdf = Pdf::loadView('pdf.quotations', $data);
+        $data = $this->preparePdfData($quotation);
+        $pdf = Pdf::loadView('pdf.quotations', $data)
+            ->setOption('isPhpEnabled', true)
+            ->setOption('isHtml5ParserEnabled', true)
+            ->setOption('isRemoteEnabled', true)
+            ->setPaper('a4', 'portrait');
         return $pdf->stream($quotation->quotation_number . '.pdf');
     }
 
@@ -710,12 +655,23 @@ class QuotationController extends Controller
     //     ]);
     // }
 
-     public function generatePDF(Quotation $quotation)
+    public function generatePDF(Quotation $quotation)
     {
-        $startedAt = hrtime(true);
+        $data = $this->preparePdfData($quotation);
+        $pdf = Pdf::loadView('pdf.quotations', $data)
+            ->setOption('isPhpEnabled', true)
+            ->setOption('isHtml5ParserEnabled', true)
+            ->setOption('isRemoteEnabled', true)
+            ->setPaper('a4', 'portrait');
+        return response($pdf->output(), 200, [
+            'Content-Type' => 'application/pdf',
+            'Content-Disposition' => 'attachment; filename="' . $quotation->quotation_number . '.pdf"',
+        ]);
+    }
 
+    private function preparePdfData(Quotation $quotation): array
+    {
         $quotation->load(['items.product', 'client']);
-        $loadedAt = hrtime(true);
 
         $amount_in_words = $this->convertNumberToWords($quotation->total_amount) . ' Taka Only';
 
@@ -725,7 +681,6 @@ class QuotationController extends Controller
             2000,
             95
         );
-        $assetsResolvedAt = hrtime(true);
 
         $signatoryPhotoRaw = $quotation->signatory_photo;
         if (empty($signatoryPhotoRaw) && !empty($quotation->signatory_user_id)) {
@@ -744,7 +699,7 @@ class QuotationController extends Controller
 
         $signatoryPhoto = $this->resolvePublicFilePath($signatoryPhotoRaw);
 
-        $data = [
+        return [
             'quotation' => $quotation,
             'amount_in_words' => $amount_in_words,
 
@@ -778,44 +733,6 @@ class QuotationController extends Controller
 
             'additional_enclosed' => $quotation->additional_enclosed,
         ];
-
-        $html = view('pdf.quotations', $data)->render();
-        $viewRenderedAt = hrtime(true);
-
-$pdf = Pdf::loadHTML($html)
-    ->setOption('isPhpEnabled', true)
-    ->setOption('isHtml5ParserEnabled', true)
-    ->setOption('isRemoteEnabled', true)
-    ->setPaper('a4', 'portrait');
-    // no margin setOptions needed — CSS @page handles it
-
-        $pdfBinary = $pdf->output();
-        $pdfRenderedAt = hrtime(true);
-
-        $timings = [
-            'load_ms' => round(($loadedAt - $startedAt) / 1_000_000, 2),
-            'asset_ms' => round(($assetsResolvedAt - $loadedAt) / 1_000_000, 2),
-            'view_ms' => round(($viewRenderedAt - $assetsResolvedAt) / 1_000_000, 2),
-            'pdf_ms' => round(($pdfRenderedAt - $viewRenderedAt) / 1_000_000, 2),
-            'total_ms' => round(($pdfRenderedAt - $startedAt) / 1_000_000, 2),
-        ];
-
-        logger()->info('Quotation PDF timing', [
-            'quotation_id' => $quotation->id,
-            'quotation_number' => $quotation->quotation_number,
-            'items_count' => $quotation->items->count(),
-            'html_bytes' => strlen($html),
-            'pdf_bytes' => strlen($pdfBinary),
-            'background_image_kb' => $this->fileSizeInKb($pdfBackgroundImage),
-            'signatory_photo_kb' => $this->fileSizeInKb($signatoryPhoto),
-            'timings_ms' => $timings,
-        ]);
-
-        return response($pdfBinary, 200, [
-            'Content-Type' => 'application/pdf',
-            'Content-Disposition' => 'attachment; filename="' . $quotation->quotation_number . '.pdf"',
-            'X-Quotation-Pdf-Timing' => json_encode($timings),
-        ]);
     }
 
     private function resolvePublicFilePath(?string $path): ?string

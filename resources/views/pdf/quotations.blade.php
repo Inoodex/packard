@@ -6,6 +6,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Packard | Quotation Management</title>
     <style>
+        @page {
+            size: A4 portrait;
+            margin: 140px 15px 105px 0;
+        }
+    </style>
+    <style>
 
         @font-face {
             font-family: 'Century Gothic';
@@ -21,19 +27,14 @@
             font-style: normal;
         }
 
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
 
         body {
             font-family: 'Century Gothic', sans-serif;
             font-size: 12px;
             line-height: 1.35;
             color: #000;
-            padding: 5px;
+            margin: 0;
+            padding: 0;
         }
 
         body,
@@ -48,44 +49,21 @@
             font-family: 'Century Gothic', sans-serif !important;
         }
 
-@page {
-    size: A4 portrait;
-    margin-top: 180pt;
-    margin-bottom: 90pt;
-    margin-left: 0;
-    margin-right: 0;
-}
 
-        :root {
-            --pdf-top-safe-space: 120px;
-            --pdf-bottom-safe-space: 90px;
-            --pdf-side-safe-space: 30px;
-            --pdf-content-width: 94%;
-            --pdf-left-offset: 24px;
-            --pdf-right-offset: 3%;
-        }
-
+        /* Safe spacing constants (approximate equivalents of previous variables) */
         .aligned-content {
-            width: calc(100% - var(--pdf-left-offset) - var(--pdf-right-offset));
-            margin-left: var(--pdf-left-offset);
-            margin-right: var(--pdf-right-offset);
+            width: 94%;
+            margin-left: 24pt;
+            margin-right: 3%;
         }
 
-        /* Background Image */
-        body {
-            background-image: url('{{ $pdf_background_image }}');
-            background-size: cover;
-            background-position: center;
-            background-attachment: fixed;
-            background-repeat: no-repeat;
-        }
-
+        /* Background Image - handled via fixed div for better dompdf support */
         .bg-wrapper {
             position: fixed;
-            top: 0;
+            top: -140px; /* Offset the @page margin to reach the physical top */
             left: 0;
             width: 100%;
-            height: 100%;
+            height: 297mm; /* Full A4 height to cover the whole page */
             z-index: -1;
         }
 
@@ -96,15 +74,10 @@
         }
 
         /* Main Content */
-.content-wrapper {
-    /* remove padding-top  — @page margin-top handles every page now */
-    /* remove padding-bottom — @page margin-bottom handles every page now */
-    padding-left: var(--pdf-side-safe-space);
-    padding-right: var(--pdf-side-safe-space);
-    position: relative;
-    z-index: 5;
-}
-
+        .content-wrapper {
+            padding-left: 30pt;
+            padding-right: 30pt;
+        }
 
         .reference {
             text-align: right;
@@ -120,12 +93,12 @@
 
         .header-content {
             display: table;
-            width: calc(100% - var(--pdf-left-offset) - var(--pdf-right-offset));
-            margin-bottom: 10px;
+            width: 94%;
+            margin-bottom: 10pt;
             margin-top: 0;
             table-layout: fixed;
-            margin-left: var(--pdf-left-offset);
-            margin-right: var(--pdf-right-offset);
+            margin-left: 24pt;
+            margin-right: 3%;
         }
 
         .header-content-left {
@@ -150,28 +123,28 @@
         }
 
         .subject {
-            margin: 15px 0;
+            margin: 15pt 0;
             font-weight: bold;
             font-family: 'Century Gothic', Times, serif !important;
-            width: calc(100% - var(--pdf-left-offset) - var(--pdf-right-offset));
-            margin-left: var(--pdf-left-offset);
-            margin-right: var(--pdf-right-offset);
+            width: 94%;
+            margin-left: 24pt;
+            margin-right: 3%;
         }
 
         .letter-body {
-            margin: 15px 0;
+            margin: 15pt 0;
             text-align: justify;
             line-height: 1.1;
-            width: calc(100% - var(--pdf-left-offset) - var(--pdf-right-offset));
-            margin-left: var(--pdf-left-offset);
-            margin-right: var(--pdf-right-offset);
+            width: 94%;
+            margin-left: 24pt;
+            margin-right: 3%;
         }
 
         .additional-enclosed {
-            margin: 15px 0;
-            width: calc(100% - var(--pdf-left-offset) - var(--pdf-right-offset));
-            margin-left: var(--pdf-left-offset);
-            margin-right: var(--pdf-right-offset);
+            margin: 15pt 0;
+            width: 94%;
+            margin-left: 24pt;
+            margin-right: 3%;
         }
 
         /* Quotation Table */
@@ -179,12 +152,12 @@
             text-align: center;
             font-weight: bold;
             text-decoration: underline;
-            margin: 20px 0 15px 0;
-            font-size: 14px;
+            margin: 20pt 0 15pt 0;
+            font-size: 14pt;
             font-family: 'Century Gothic', Times, serif !important;
-            width: calc(100% - var(--pdf-left-offset) - var(--pdf-right-offset));
-            margin-left: var(--pdf-left-offset);
-            margin-right: var(--pdf-right-offset);
+            width: 94%;
+            margin-left: 24pt;
+            margin-right: 3%;
         }
 
         table {
@@ -277,78 +250,14 @@
 
         /* Amount in Words */
         .amount-in-words {
-            margin: 18px 0;
-            padding: 10px 12px;
+            width: 70%;
+            margin: 0 auto;
+            padding: 10pt 12pt;
             background: transparent;
             border: 1px solid #ddd;
-            font-style: normal;
-            text-align: center;
-            font-weight: bold;
-            page-break-inside: avoid;
-            font-family: 'Century Gothic', sans-serif !important;
-            width: calc(100% - var(--pdf-left-offset) - var(--pdf-right-offset));
-            margin-left: var(--pdf-left-offset);
-            margin-right: var(--pdf-right-offset);
-        }
-
-        /* .amount-words-row td {
-            padding: 10px 12px;
-            text-align: center;
-            font-style: italic;
-            font-weight: bold;
-            background-color: #f9f9f9;
-            border: 1px solid #ddd;
-        } */
-
-        /* Terms & Conditions */
-        .terms-title {
-            text-align: center;
-            font-weight: bold;
-            text-decoration: underline;
-            margin: 20px 0 10px 0;
-            font-size: 13px;
-            page-break-inside: avoid;
-             font-family: 'Century Gothic', Times, serif !important;
-        }
-
-        .terms-table {
-            width: calc(100% - var(--pdf-left-offset) - var(--pdf-right-offset));
-            margin-bottom: 30px;
-            page-break-inside: avoid;
-            margin-left: var(--pdf-left-offset);
-            margin-right: var(--pdf-right-offset);
-        }
-
-        .terms-table td {
-            vertical-align: top;
-            padding: 5px 8px;
-        }
-
-        .terms-table td:first-child {
-            width: 30px;
-            /* font-weight: bold; */
-            font-family: 'Century Gothic', Times, serif !important;
-        }
-
-        /* Signature */
-        .signature-section {
-            margin-top: 60px;
-            page-break-inside: avoid;
-            font-family: 'Century Gothic', Times, serif !important;
-            width: calc(100% - var(--pdf-left-offset) - var(--pdf-right-offset));
-            margin-left: var(--pdf-left-offset);
-            margin-right: var(--pdf-right-offset);
-            text-align: left;
-            
-        }
-
-        .signature-content {
-            width: 280px;
-            font-family: 'Century Gothic', Times, serif !important;
-            font-weight: bold;
             display: block;
-            text-align: left;
-
+            font-weight: bold;
+            text-align: center;
         }
 
         .signature-content p {
@@ -380,6 +289,52 @@
 
         .post-table-page-break .terms-title {
             margin-top: 0;
+        }
+
+        /* Terms & Conditions */
+        .terms-title {
+            text-align: center;
+            font-weight: bold;
+            text-decoration: underline;
+            margin: 20pt 0 10pt 0;
+            font-size: 13pt;
+            page-break-inside: avoid;
+            font-family: 'Century Gothic', Times, serif !important;
+        }
+
+        .terms-table {
+            width: 94%;
+            margin-bottom: 30pt;
+            page-break-inside: avoid;
+            margin-left: 24pt;
+            margin-right: 3%;
+        }
+
+        .terms-table td {
+            vertical-align: top;
+            padding: 5px 8px;
+        }
+
+        .terms-table td:first-child {
+            width: 30px;
+            font-family: 'Century Gothic', Times, serif !important;
+        }
+
+        /* Signature Section */
+        .signature-section {
+            margin-top: 50px;
+            margin-left: 24pt;
+            margin-right: 3%;
+            width: 94%;
+            text-align: left;
+        }
+
+        .signature-content {
+            display: inline-block;
+            width: 220px;
+            text-align: left;
+            margin-right: 30px;
+            vertical-align: top;
         }
     </style>
 </head>
