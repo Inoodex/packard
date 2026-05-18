@@ -20,6 +20,7 @@ class User extends Authenticatable
      */
     protected $fillable = [
         'name',
+        'designation',
         'email',
         'phone',
         'password',
@@ -49,15 +50,15 @@ class User extends Authenticatable
         'password' => 'hashed',
     ];
 
-    public function employee()
-{
-    return $this->hasOne(Employee::class, 'user_id');
-}
+    // public function employee()
+    // {
+    //     return $this->hasOne(Employee::class, 'user_id');
+    // }
 
-// public function employee()
-// {
-//     return $this->hasOne(Employee::class, 'employee_id', 'employee_id');
-// }
+    // public function employee()
+    // {
+    //     return $this->hasOne(Employee::class, 'employee_id', 'employee_id');
+    // }
 
 public function taDas()
 {

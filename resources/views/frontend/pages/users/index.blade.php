@@ -39,10 +39,11 @@
                                             <th>#</th>
                                             <th>Signature Image</th>
                                             <th>Name</th>
+                                            <th>Designation</th>
                                             <th>Email</th>
                                             <th>Phone</th>
-                                            <th>Type</th>
-                                            <th>status</th>
+                                            <!-- <th>Type</th> -->
+                                            <th>Status</th>
                                             <th>Action</th>
                                         </tr>
                                     </thead>
@@ -55,10 +56,13 @@
                                                         src="{{ asset('frontend/users/' . $item->images) }}"
                                                         alt="Users Image">
                                                 </td>
-                                                <td>{{ $item->name }}</td>
+                                                <td>{{ $item->name }} <br><span
+                                                        class="text-muted">{{ $item->roleName ?? 'N/A' }}</span>
+                                                </td>
+                                                <td>{{ $item->designation }}</td>
                                                 <td>{{ $item->email }}</td>
                                                 <td>{{ $item->phone }}</td>
-                                                <td>{{ $item->roleName ?? 'N/A' }}</td>
+                                                <!-- <td>{{ $item->roleName ?? 'N/A' }}</td> -->
                                                 <td class="{{ $item->status == '1' ? 'text-success' : 'text-danger' }}">
                                                     {{ $item->status == '1' ? 'Active' : 'Inactive' }}
                                                 </td>
@@ -108,10 +112,10 @@
                                                                     @csrf
                                                                     @method('delete')
                                                                     <button type="submit"
-                                                                        class="btn btn-default">Delete</button>
+                                                                        class="btn btn-danger">Delete</button>
 
                                                                 </form>
-                                                                <button type="button" class="btn btn-light"
+                                                                <button type="button" class="btn btn-secondary"
                                                                     data-bs-dismiss="modal">Close</button>
                                                             </div>
 

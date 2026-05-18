@@ -58,6 +58,12 @@
                                                 placeholder="Enter User name">
                                         </div>
                                         <div class="col-xxl-3 col-md-6 mb-3">
+                                            <label for="designation" class="form-label">Designation</label>
+                                            <input type="text" class="form-control"
+                                                value="{{ old('designation', $user->designation) }}" id="designation" name="designation"
+                                                placeholder="e.g. Sales Manager">
+                                        </div>
+                                        <div class="col-xxl-3 col-md-6 mb-3">
                                             <label for="name" class="form-label">Email</label>
                                             <input type="text" class="form-control"
                                                 value="{{ old('email', $user->email) }}" id="email" name="email"

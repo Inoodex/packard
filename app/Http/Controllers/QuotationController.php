@@ -42,7 +42,7 @@ class QuotationController extends Controller
         $defaultCompany = Schema::hasTable('company_details')
             ? CompanyDetail::query()->where('is_default', true)->first()
             : null;
-        $userColumns = ['id', 'name', 'images'];
+        $userColumns = ['id', 'name', 'images', 'designation'];
         if (Schema::hasColumn('users', 'photo')) {
             $userColumns[] = 'photo';
         }
@@ -129,7 +129,7 @@ class QuotationController extends Controller
             // Signatory info
             $signatoryUser = User::findOrFail($request->signatory_user_id);
             $signatoryName = $signatoryUser->name;
-            $signatoryDesignation = optional($signatoryUser->roles()->orderBy('name')->first())->name ?? '';
+            $signatoryDesignation = !empty($signatoryUser->designation) ? $signatoryUser->designation : (optional($signatoryUser->roles()->orderBy('name')->first())->name ?? '');
             $signatoryPhoto = null;
             if (!empty($signatoryUser->photo)) {
                 $signatoryPhoto = $signatoryUser->photo;
@@ -305,7 +305,7 @@ class QuotationController extends Controller
         $defaultCompany = Schema::hasTable('company_details')
             ? CompanyDetail::query()->where('is_default', true)->first()
             : null;
-        $userColumns = ['id', 'name', 'images'];
+        $userColumns = ['id', 'name', 'images', 'designation'];
         if (Schema::hasColumn('users', 'photo')) {
             $userColumns[] = 'photo';
         }
@@ -393,7 +393,7 @@ class QuotationController extends Controller
                 // Signatory info
                 $signatoryUser = User::findOrFail($request->signatory_user_id);
                 $signatoryName = $signatoryUser->name;
-                $signatoryDesignation = optional($signatoryUser->roles()->orderBy('name')->first())->name ?? '';
+                $signatoryDesignation = !empty($signatoryUser->designation) ? $signatoryUser->designation : (optional($signatoryUser->roles()->orderBy('name')->first())->name ?? '');
                 $signatoryPhoto = null;
                 if (!empty($signatoryUser->photo)) {
                     $signatoryPhoto = $signatoryUser->photo;

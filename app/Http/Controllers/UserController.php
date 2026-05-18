@@ -89,8 +89,9 @@ class UserController extends Controller
     $rules = [
         'user_role' => 'required',
         'name' => 'required|string',
+        'designation' => 'nullable|string|max:255',
         'email' => 'required|email|unique:users,email',
-        'phone' => 'unique:users,phone',
+        'phone' => 'nullable|unique:users,phone',
         'password' => 'required|string|min:6',
         'status' => 'required|in:0,1',
     ];
@@ -110,6 +111,7 @@ class UserController extends Controller
     $user->type = '1';
     $user->role_id = $validatedData['user_role'];
     $user->name = $validatedData['name'];
+    $user->designation = $validatedData['designation'] ?? null;
     $user->email = $validatedData['email'];
     $user->phone = $validatedData['phone'];
     $user->password = bcrypt($validatedData['password']);
@@ -124,8 +126,8 @@ class UserController extends Controller
     }
 
     // Create Employee record automatically if role is employee
-    if ($role && $role->name === 'Employee') {
-        Employee::create([
+    if ($role && $role->name === 'Employee' && class_exists('App\Models\Employee') && \Illuminate\Support\Facades\Schema::hasTable('employees')) {
+        \App\Models\Employee::create([
             'user_id' => $user->id,
             'employee_id' => 'EMP' . str_pad($user->id, 4, '0', STR_PAD_LEFT), // Example: EMP0001
             'name' => $user->name,
@@ -173,6 +175,7 @@ class UserController extends Controller
     $rules = [
         'user_role' => 'required',
         'name' => 'required|string',
+        'designation' => 'nullable|string|max:255',
         'email' => 'required|email|unique:users,email,' . $user->id,
         'phone' => 'nullable|unique:users,phone,' . $user->id,
         'password' => 'nullable|string|min:6',
@@ -190,6 +193,7 @@ class UserController extends Controller
     }
 
     $user->name = $validatedData['name'];
+    $user->designation = $validatedData['designation'] ?? null;
     $user->email = $validatedData['email'];
     $user->phone = $validatedData['phone'];
     if (!empty($validatedData['password'])) {
@@ -206,8 +210,8 @@ class UserController extends Controller
     }
 
     // Update Employee record if exists
-    if ($role && $role->name === 'Employee') {
-        $employee = Employee::where('user_id', $user->id)->first();
+    if ($role && $role->name === 'Employee' && class_exists('App\Models\Employee') && \Illuminate\Support\Facades\Schema::hasTable('employees')) {
+        $employee = \App\Models\Employee::where('user_id', $user->id)->first();
         if ($employee) {
             $employee->update([
                 'name' => $user->name,
@@ -217,7 +221,7 @@ class UserController extends Controller
             ]);
         } else {
             // Create employee if it doesn't exist
-            Employee::create([
+            \App\Models\Employee::create([
                 'user_id' => $user->id,
                 'employee_id' => 'EMP' . str_pad($user->id, 4, '0', STR_PAD_LEFT),
                 'name' => $user->name,
@@ -244,7 +248,7 @@ class UserController extends Controller
     }
 
     // Delete related employee record if it exists
-    if ($user->employee) {
+    if (class_exists('App\Models\Employee') && \Illuminate\Support\Facades\Schema::hasTable('employees') && method_exists($user, 'employee') && $user->employee) {
         $user->employee->delete();
     }
 
