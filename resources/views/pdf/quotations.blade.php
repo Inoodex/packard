@@ -248,6 +248,7 @@
             text-align: right;
             font-weight: bold;
             font-family: 'Century Gothic', Times, serif !important;
+            background-color: #f0f0f0;
         }
 
         .total-row,
@@ -302,10 +303,10 @@
 
         /* Terms & Conditions */
         .terms-title {
-            text-align: center;
+            text-align: left;
+            margin-left: 30px;
             font-weight: bold;
             text-decoration: underline;
-            margin: 3px 0 6px 0;
             font-size: 12pt;
             page-break-inside: avoid;
             font-family: 'Century Gothic', Times, serif !important;
@@ -524,14 +525,14 @@
                     </tr>
                 @endif
 
-                <tr class="total-row">
-                    <td colspan="7">NET TOTAL (BDT)</td>
-                    <td class="total-price">
-                        {{ number_format($quotation->total_amount - ($quotation->vat_amount ?? 0), 2) }}
-                    </td>
-                </tr>
-
                 @if (($quotation->vat_amount ?? 0) > 0)
+                    <tr class="total-row">
+                        <td colspan="7">NET TOTAL (BDT)</td>
+                        <td class="total-price">
+                            {{ number_format($quotation->total_amount - ($quotation->vat_amount ?? 0), 2) }}
+                        </td>
+                    </tr>
+
                     <tr class="total-row">
                         <td colspan="7">VAT ({{ (float) ($quotation->vat_percent ?? 0) }}%) (BDT)</td>
                         <td class="total-price">{{ number_format($quotation->vat_amount ?? 0, 2) }}</td>
@@ -572,7 +573,7 @@
                     @if (!empty($signatory_photo) && file_exists($signatory_photo))
                         <p style="margin-bottom: 8px;">
                             <img src="{{ $signatory_photo }}" alt="Signature"
-                                style="max-height: 70px; max-width: 180px;">
+                                style="max-height: 40px; max-width: 150px;">
                         </p>
                     @endif
                     <p>({{ $signatory_name ?? 'N/A' }})</p>
@@ -593,7 +594,7 @@
                 @if (!empty($signatory_photo) && file_exists($signatory_photo))
                     <p style="margin-bottom: 8px;">
                         <img src="{{ $signatory_photo }}" alt="Signature"
-                            style="max-height: 70px; max-width: 180px;">
+                            style="max-height: 40px; max-width: 150px;">
                     </p>
                 @endif
                 <p>{{ $signatory_name ?? 'N/A' }}</p>
