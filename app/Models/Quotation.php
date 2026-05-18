@@ -30,6 +30,7 @@ class Quotation extends Model
 
         // PDF snapshot fields
         'client_name',
+        'highest_designation',
         'client_designation',
         'client_address',
         'client_phone',

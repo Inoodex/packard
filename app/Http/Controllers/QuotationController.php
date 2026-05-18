@@ -79,6 +79,7 @@ class QuotationController extends Controller
         'client_address' => 'nullable|string',
         'client_phone' => 'nullable|string|max:20',
         'client_email' => 'nullable|email|max:255',
+        'highest_designation' => 'nullable|string|max:255',
         'attention_to' => 'nullable|string|max:255',
         'body_content' => 'nullable|string',
         'terms_conditions' => 'required|string',
@@ -160,6 +161,7 @@ class QuotationController extends Controller
                     // Create new client
                     $client = Client::create([
                         'name' => $clientName,
+                        'highest_designation' => $request->highest_designation,
                         'phone' => $clientPhone ?: '-',
                         'email' => $clientEmail ?: ('no-email-' . now()->timestamp . '@local.test'),
                         'address' => $clientAddress,
@@ -213,6 +215,7 @@ class QuotationController extends Controller
 
                 // PDF snapshot fields
                 'client_name' => $clientName,
+                'highest_designation' => $request->highest_designation,
                 'client_designation' => $request->client_designation,
                 'client_address' => $clientAddress,
                 'client_phone' => $clientPhone,
@@ -260,6 +263,32 @@ class QuotationController extends Controller
 
     return redirect()->route('quotations.index')->with('success', 'Quotation created successfully.');
 }
+
+    public function getSuggestions(Request $request)
+    {
+        $clientId   = $request->query('client_id');
+        $clientName = $request->query('client_name');
+
+        $query = Quotation::query()->whereNotNull('attention_to');
+
+        if ($clientId) {
+            $query->where('client_id', $clientId);
+        } elseif ($clientName) {
+            $query->where('client_name', 'like', '%' . trim($clientName) . '%');
+        }
+
+        $rows = $query->select('attention_to', 'client_designation', 'highest_designation')
+            ->get()
+            ->map(fn ($q) => [
+                'attention_to'       => $q->attention_to,
+                'client_designation' => $q->client_designation,
+                'highest_designation'=> $q->highest_designation,
+            ])
+            ->unique(fn ($r) => $r['attention_to'] . '||' . $r['client_designation'] . '||' . $r['highest_designation'])
+            ->values();
+
+        return response()->json($rows);
+    }
 
     public function show(Quotation $quotation)
     {
@@ -314,6 +343,7 @@ class QuotationController extends Controller
             'client_address' => 'nullable|string',
             'client_phone' => 'nullable|string|max:20',
             'client_email' => 'nullable|email|max:255',
+            'highest_designation' => 'nullable|string|max:255',
             'attention_to' => 'nullable|string|max:255',
             'body_content' => 'nullable|string',
             'terms_conditions' => 'required|string',
@@ -395,6 +425,7 @@ class QuotationController extends Controller
                         // Create new client
                         $client = Client::create([
                             'name' => $clientName,
+                            'highest_designation' => $request->highest_designation,
                             'phone' => $clientPhone ?: '-',
                             'email' => $clientEmail ?: ('no-email-' . now()->timestamp . '@local.test'),
                             'address' => $clientAddress,
@@ -448,6 +479,7 @@ class QuotationController extends Controller
 
                     // PDF snapshot fields
                     'client_name' => $clientName,
+                    'highest_designation' => $request->highest_designation,
                     'client_designation' => $request->client_designation,
                     'client_address' => $clientAddress,
                     'client_phone' => $clientPhone,
@@ -690,18 +722,20 @@ class QuotationController extends Controller
             80
         );
 
-        $signatoryPhotoRaw = $quotation->signatory_photo;
-        if (empty($signatoryPhotoRaw) && !empty($quotation->signatory_user_id)) {
-            $signatoryUser = User::query()
-                ->select(['id', 'photo', 'images'])
-                ->find($quotation->signatory_user_id);
+        $signatoryUser = null;
+        if (!empty($quotation->signatory_name)) {
+            $signatoryUser = User::where('name', $quotation->signatory_name)->first();
+        }
 
-            if ($signatoryUser) {
-                if (!empty($signatoryUser->photo)) {
-                    $signatoryPhotoRaw = $signatoryUser->photo;
-                } elseif (!empty($signatoryUser->images)) {
-                    $signatoryPhotoRaw = 'frontend/users/' . $signatoryUser->images;
-                }
+        $signatoryPhone = $signatoryUser?->phone;
+        $signatoryEmail = $signatoryUser?->email;
+
+        $signatoryPhotoRaw = $quotation->signatory_photo;
+        if (empty($signatoryPhotoRaw) && $signatoryUser) {
+            if (!empty($signatoryUser->photo)) {
+                $signatoryPhotoRaw = $signatoryUser->photo;
+            } elseif (!empty($signatoryUser->images)) {
+                $signatoryPhotoRaw = 'frontend/users/' . $signatoryUser->images;
             }
         }
 
@@ -713,6 +747,7 @@ class QuotationController extends Controller
 
             // Client snapshot
             'client_name' => $quotation->client_name,
+            'highest_designation' => $quotation->highest_designation,
             'client_designation' => $quotation->client_designation,
             'client_address' => $quotation->client_address,
             'client_phone' => $quotation->client_phone,
@@ -738,6 +773,8 @@ class QuotationController extends Controller
             'signatory_name' => $quotation->signatory_name,
             'signatory_designation' => $quotation->signatory_designation,
             'signatory_photo' => $this->optimizeImageForPdf($signatoryPhoto, 'quotation-signatory-' . $quotation->id, 220),
+            'signatory_phone' => $signatoryPhone,
+            'signatory_email' => $signatoryEmail,
 
             'additional_enclosed' => $quotation->additional_enclosed,
         ];

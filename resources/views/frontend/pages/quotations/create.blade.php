@@ -82,7 +82,7 @@
     </style>
 
     @php
-        $defaultBody = "Dear Sir,\nWith reference to the above inquiry, we are pleased to offer our most competitive price for your kind consideration as follows.";
+        $defaultBody = "Dear Sir/Madam,\nWith reference to the above inquiry, we are pleased to offer our most competitive price for your kind consideration as follows.";
         $defaultTerms =
             " Delivery timeline will be confirmed after order confirmation.\n Prices are in BDT.\n VAT/TAX are not included unless mentioned.\n Payment terms: As per mutual agreement.";
         $hasClients = isset($clients) && $clients->count() > 0;
@@ -140,6 +140,7 @@
                                 <option value="">Choose existing client...</option>
                                 @foreach ($clients as $client)
                                     <option value="{{ $client->id }}" data-name="{{ $client->name }}"
+                                        data-highest="{{ $client->highest_designation }}"
                                         data-phone="{{ $client->phone }}" data-email="{{ $client->email }}"
                                         data-address="{{ $client->address }}"
                                         {{ (string) old('client_id') === (string) $client->id ? 'selected' : '' }}>
@@ -156,14 +157,59 @@
                                 value="{{ old('client_name') }}">
                         </div>
                         <div class="col-md-6">
+                            <label class="form-label">Company Highest Designation</label>
+                            <select id="highest-designation-input" name="highest_designation" class="form-select">
+                                <option value="">Choose or type designation...</option>
+                                @php
+                                    $predefinedDesignations = [
+                                        'The Chairman',
+                                        'The Chief Executive Officer (CEO)',
+                                        'The Deputy Director',
+                                        'The Deputy Managing Director',
+                                        'The Director',
+                                        'The Founder',
+                                        'The General Manager',
+                                        'The Managing Director',
+                                        'The Proprietor',
+                                    ];
+                                    $currentVal = old('highest_designation');
+                                @endphp
+                                @foreach($predefinedDesignations as $desig)
+                                    <option value="{{ $desig }}" {{ $currentVal == $desig ? 'selected' : '' }}>{{ $desig }}</option>
+                                @endforeach
+                                @if($currentVal && !in_array($currentVal, $predefinedDesignations))
+                                    <option value="{{ $currentVal }}" selected>{{ $currentVal }}</option>
+                                @endif
+                            </select>
+                        </div>
+                        <div class="col-md-6">
                             <label class="form-label">Attention To</label>
-                            <input type="text" name="attention_to" class="form-control"
-                                value="{{ old('attention_to') }}">
+                            <div class="dropdown">
+                                <div class="input-group">
+                                    <input type="text" name="attention_to" id="attention-to-input"
+                                        class="form-control"
+                                        value="{{ old('attention_to') }}"
+                                        placeholder="Type or select from history..."
+                                        autocomplete="off">
+                                    <button type="button" class="btn btn-outline-secondary dropdown-toggle dropdown-toggle-split"
+                                        id="attention-dropdown-btn"
+                                        data-bs-toggle="dropdown"
+                                        aria-expanded="false"
+                                        title="Pick from past entries"
+                                        style="display:none;">
+                                    </button>
+                                    <ul class="dropdown-menu dropdown-menu-end w-100" id="attention-dropdown-menu"
+                                        aria-labelledby="attention-dropdown-btn"
+                                        style="max-height:260px; overflow-y:auto;">
+                                        <li><span class="dropdown-item text-muted small">No history yet.</span></li>
+                                    </ul>
+                                </div>
+                            </div>
                         </div>
                         <div class="col-md-6">
                             <label class="form-label">Designation</label>
-                            <input type="text" name="client_designation" class="form-control"
-                                value="{{ old('client_designation') }}">
+                            <input type="text" name="client_designation" id="designation-input" class="form-control"
+                                value="{{ old('client_designation') }}" placeholder="Auto-filled or type freely...">
                         </div>
                         <div class="col-md-6">
                             <label class="form-label">Phone</label>
@@ -210,22 +256,22 @@
                         <div class="col-md-6">
                             <label class="form-label">Company Name *</label>
                             <input type="text" name="company_name" class="form-control"
-                                value="{{ old('company_name', $defaultCompany->name ?? '') }}" required>
+                                value="{{ old('company_name', $defaultCompany->name ?? '') }}" required readonly style="opacity: 0.5; pointer-events: none;">
                         </div>
                         <div class="col-md-6">
                             <label class="form-label">Company Phone</label>
                             <input type="text" name="company_phone" class="form-control"
-                                value="{{ old('company_phone', $defaultCompany->phone ?? '') }}">
+                                value="{{ old('company_phone', $defaultCompany->phone ?? '') }}" readonly style="opacity: 0.5; pointer-events: none;">
                         </div>
                         <div class="col-md-6">
                             <label class="form-label">Company Email</label>
                             <input type="email" name="company_email" class="form-control"
-                                value="{{ old('company_email', $defaultCompany->email ?? '') }}">
+                                value="{{ old('company_email', $defaultCompany->email ?? '') }}" readonly style="opacity: 0.5; pointer-events: none;">
                         </div>
                         <div class="col-md-6">
                             <label class="form-label">Company Website</label>
                             <input type="text" name="company_website" class="form-control"
-                                value="{{ old('company_website', $defaultCompany->website ?? '') }}">
+                                value="{{ old('company_website', $defaultCompany->website ?? '') }}" readonly style="opacity: 0.5;  pointer-events: none;">
                         </div>
                         <input type="hidden" name="company_address"
                             value="{{ old('company_address', $defaultCompany->address ?? '') }}">
@@ -433,6 +479,7 @@
             const existingClientWrap = document.getElementById('existing-client-wrap');
             const existingClientSelect = document.getElementById('existing-client-select');
             const clientNameInput = document.getElementById('client-name-input');
+            const highestDesignationInput = document.getElementById('highest-designation-input');
             const clientPhoneInput = document.getElementById('client-phone-input');
             const clientEmailInput = document.getElementById('client-email-input');
             const clientAddressInput = document.getElementById('client-address-input');
@@ -448,6 +495,9 @@
 
                 const selected = existingClientSelect.options[existingClientSelect.selectedIndex];
                 clientNameInput.value = selected?.dataset?.name || '';
+                if (highestDesignationInput) {
+                    highestDesignationInput.value = selected?.dataset?.highest || '';
+                }
                 clientPhoneInput.value = selected?.dataset?.phone || '';
                 clientEmailInput.value = selected?.dataset?.email || '';
                 clientAddressInput.value = selected?.dataset?.address || '';
@@ -464,6 +514,7 @@
                 }
 
                 clientNameInput.readOnly = isExisting;
+                if (highestDesignationInput) highestDesignationInput.readOnly = isExisting;
                 clientPhoneInput.readOnly = isExisting;
                 clientEmailInput.readOnly = isExisting;
                 clientAddressInput.readOnly = isExisting;
@@ -472,6 +523,20 @@
 
                 if (isExisting) {
                     useClientFromSelect();
+                }
+
+                // Show history dropdown only for existing clients
+                const attnDropBtn = document.getElementById('attention-dropdown-btn');
+                const attnInput   = document.getElementById('attention-to-input');
+                const desigInput  = document.getElementById('designation-input');
+                if (attnDropBtn) {
+                    attnDropBtn.style.display = isExisting ? 'block' : 'none';
+                }
+                if (attnInput) {
+                    attnInput.placeholder = isExisting ? 'Type or select from history...' : '';
+                }
+                if (desigInput) {
+                    desigInput.placeholder = isExisting ? 'Auto-filled or type freely...' : '';
                 }
             }
 
@@ -680,6 +745,13 @@
                     syncSignatoryData();
                 });
 
+                // Highest Designation Select
+                $('#highest-designation-input').select2({
+                    ...select2Options,
+                    tags: true, // Allows typing custom values
+                    placeholder: "Choose or type designation..."
+                });
+
                 // Product Select
                 $('#product-select').select2({
                     ...select2Options,
@@ -687,6 +759,104 @@
                 }).on('change', function() {
                     // Trigger the vanilla change event for product selection logic
                     productSelect.dispatchEvent(new Event('change'));
+                });
+            }
+        })();
+    </script>
+@endpush
+
+@push('scripts')
+    <script>
+        (function () {
+            const suggestionsUrl = "{{ route('quotations.suggestions') }}";
+            const attentionInput   = document.getElementById('attention-to-input');
+            const designationInput = document.getElementById('designation-input');
+            const dropdownMenu     = document.getElementById('attention-dropdown-menu');
+            const dropdownBtn      = document.getElementById('attention-dropdown-btn');
+            const existingClientSelect = document.getElementById('existing-client-select');
+            const clientNameInput  = document.getElementById('client-name-input');
+
+            // Bootstrap Dropdown instance
+            let bsDropdown = null;
+            if (dropdownBtn && typeof bootstrap !== 'undefined') {
+                bsDropdown = new bootstrap.Dropdown(dropdownBtn, { autoClose: true });
+            }
+
+            function renderDropdown(list) {
+                dropdownMenu.innerHTML = '';
+
+                if (!list.length) {
+                    const li = document.createElement('li');
+                    li.innerHTML = '<span class="dropdown-item text-muted small">No past entries found.</span>';
+                    dropdownMenu.appendChild(li);
+                    return;
+                }
+
+                list.forEach(item => {
+                    const li  = document.createElement('li');
+                    const btn = document.createElement('button');
+                    btn.type      = 'button';
+                    btn.className = 'dropdown-item';
+                    let label = `<span class="fw-semibold">${item.attention_to}</span>`;
+                    if (item.client_designation) label += ` <small class="text-muted ms-2">${item.client_designation}</small>`;
+                    if (item.highest_designation) label += ` <br><small class="text-info">${item.highest_designation}</small>`;
+                    btn.innerHTML = label;
+                    btn.addEventListener('click', () => {
+                        attentionInput.value   = item.attention_to;
+                        designationInput.value = item.client_designation ?? '';
+                        if (highestDesignationInput) {
+                            highestDesignationInput.value = item.highest_designation ?? '';
+                        }
+                        bsDropdown?.hide();
+                    });
+                    li.appendChild(btn);
+                    dropdownMenu.appendChild(li);
+                });
+            }
+
+            function fetchAndOpen(params) {
+                const qs = new URLSearchParams(params).toString();
+                fetch(`${suggestionsUrl}?${qs}`, { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+                    .then(r => r.json())
+                    .then(data => {
+                        renderDropdown(data);
+                        bsDropdown?.show();
+                    })
+                    .catch(() => {});
+            }
+
+            // Existing client selected
+            if (existingClientSelect) {
+                existingClientSelect.addEventListener('change', function () {
+                    if (this.value) fetchAndOpen({ client_id: this.value });
+                });
+                // Select2 fires on the hidden select via jQuery – bridge it
+                if (window.$) {
+                    $(existingClientSelect).on('change', function () {
+                        if (this.value) fetchAndOpen({ client_id: this.value });
+                    });
+                }
+            }
+
+            // New client name typed – debounced
+            let debounceTimer;
+            if (clientNameInput) {
+                clientNameInput.addEventListener('input', function () {
+                    clearTimeout(debounceTimer);
+                    const name = this.value.trim();
+                    if (name.length >= 2) {
+                        debounceTimer = setTimeout(() => fetchAndOpen({ client_name: name }), 420);
+                    }
+                });
+            }
+
+            // Split-toggle button: fetch if menu is stale/empty then open
+            if (dropdownBtn) {
+                dropdownBtn.addEventListener('click', function (e) {
+                    const clientId   = existingClientSelect?.value;
+                    const clientName = clientNameInput?.value?.trim();
+                    if (clientId)   fetchAndOpen({ client_id: clientId });
+                    else if (clientName) fetchAndOpen({ client_name: clientName });
                 });
             }
         })();

@@ -264,14 +264,16 @@
 
         /* Amount in Words */
         .amount-in-words {
-            width: 70%;
+            /* width: 70%;
             margin: 0 auto;
             padding: 5pt 6pt;
             background: transparent;
-            border: 1px solid #ddd;
+            border: 1px solid #ddd; */
             display: block;
-            font-weight: bold;
-            text-align: center;
+            font-size: 12px; 
+            font-weight: bold; 
+            padding-left:32px; 
+            margin-top: -15px;
         }
 
         .signature-content p {
@@ -279,6 +281,12 @@
             line-height: 1.1;
             font-weight: bold;
 
+        }
+
+        .signature-name-section{
+            font-weight: bold;
+            font-family: 'Century Gothic', Times, serif !important;
+            line-height: 0.3;
         }
 
         .signature-line {
@@ -303,23 +311,21 @@
             font-family: 'Century Gothic', Times, serif !important;
         }
 
-        .terms-table {
+        .terms-item{
+            font-weight: bold;
+            margin-left: 24pt;
+            line-height: 0.1;
+        }
+
+        /* .terms-table {
             width: 94%;
             margin-bottom: 30pt;
             page-break-inside: avoid;
             margin-left: 24pt;
             margin-right: 3%;
-        }
+            font-weight: bold;
+        } */
 
-        .terms-table td {
-            vertical-align: top;
-            padding: 5px 8px;
-        }
-
-        .terms-table td:first-child {
-            width: 30px;
-            font-family: 'Century Gothic', Times, serif !important;
-        }
 
         /* Signature Section */
         .signature-section {
@@ -375,6 +381,11 @@
             ];
         }
 
+        $hasExtraCharges = (($quotation->discount_amount ?? 0) > 0) ||
+                           (($quotation->round_off ?? 0) > 0) ||
+                           (($quotation->installation_charge ?? 0) > 0) ||
+                           (($quotation->tax_amount ?? 0) > 0) ||
+                           (($quotation->vat_amount ?? 0) > 0);
     @endphp
 
     @foreach ($itemPages as $pageIndex => $pageData)
@@ -387,13 +398,20 @@
                         {{-- Recipient --}}
                         <div class="to-section">
                             <p>To,</p>
-                            @if (!empty($attention_to))
-                                <p>{{ $attention_to }}</p>
+                            @if (!empty($highest_designation))
+                                <p>{{ $highest_designation }}</p>
                             @endif
-                            <p>{{ $client_designation ?? 'N/A' }}</p>
-                            <p>{{ $client_name ?? 'N/A' }}</p>
-                            <p>{{ $client_email ?? 'N/A' }}</p>
+                            <p><strong>{{ $client_name ?? 'N/A' }}</strong></p>
                             <p>{{ $client_address ?? 'N/A' }}</p>
+                            
+                            @if (!empty($attention_to))
+                                <div style="margin-top: 8px;">
+                                    <p><strong>Attention: {{ $attention_to }}</strong></p>
+                                    @if (!empty($client_designation))
+                                        <p>{{ $client_designation }}</p>
+                                    @endif
+                                </div>
+                            @endif
                         </div>
                     </div>
                     <div class="header-content-right">
@@ -424,12 +442,12 @@
                 @endif
             @endif
 
-            {{-- Quotation Title --}}
-            <div class="quotation-title">QUOTATION</div>
+            <!-- {{-- Quotation Title --}}
+            <div class="quotation-title">QUOTATION</div> -->
 
             {{-- Products Table --}}
   {{-- Table 1: Products only --}}
-<table class="quotation-table aligned-content">
+<table class="quotation-table aligned-content" style="margin-top: 10px;">
     <thead>
         <tr>
             <th class="serial">S.N.</th>
@@ -449,7 +467,7 @@
                 <td class="model">{{ $item->product?->product_code ?? 'N/A' }}</td>
                 <td class="product-description">
                     @if ($item->product)
-                        {{ Str::limit($item->product->name, 40) }}
+                        {{ ($item->product->name) }}
                         @if ($item->product->details)
                             <br><small style="color: #666;">{{ $item->product->details }}</small>
                         @endif
@@ -469,52 +487,54 @@
 @if ($pageIndex === count($itemPages) - 1)
     <table class="quotation-table aligned-content" style="margin-top: -1px;">
         <tbody>
-            <tr class="total-row">
-                <td colspan="7">GROSS TOTAL (BDT)</td>
-                <td class="total-price">{{ number_format($quotation->sub_total ?? 0, 2) }}</td>
-            </tr>
-
-            @if (($quotation->discount_amount ?? 0) > 0)
+            @if ($hasExtraCharges)
                 <tr class="total-row">
-                    <td colspan="7">SPECIAL DISCOUNT
-                        ({{ number_format($quotation->discount_percent ?? 0) }}%) (BDT)</td>
-                    <td class="total-price">{{ number_format($quotation->discount_amount ?? 0, 2) }}</td>
+                    <td colspan="7">GROSS TOTAL (BDT)</td>
+                    <td class="total-price">{{ number_format($quotation->sub_total ?? 0, 2) }}</td>
                 </tr>
-            @endif
 
-            @if (($quotation->round_off ?? 0) > 0)
+                @if (($quotation->discount_amount ?? 0) > 0)
+                    <tr class="total-row">
+                        <td colspan="7">SPECIAL DISCOUNT
+                            ({{ number_format($quotation->discount_percent ?? 0) }}%) (BDT)</td>
+                        <td class="total-price">{{ number_format($quotation->discount_amount ?? 0, 2) }}</td>
+                    </tr>
+                @endif
+
+                @if (($quotation->round_off ?? 0) > 0)
+                    <tr class="total-row">
+                        <td colspan="7">ROUND OFF (BDT)</td>
+                        <td class="total-price">{{ number_format($quotation->round_off ?? 0, 2) }}</td>
+                    </tr>
+                @endif
+
+                @if (($quotation->installation_charge ?? 0) > 0)
+                    <tr class="total-row">
+                        <td colspan="7">INSTALLATION CHARGE (BDT)</td>
+                        <td class="total-price">{{ number_format($quotation->installation_charge ?? 0, 2) }}</td>
+                    </tr>
+                @endif
+
+                @if (($quotation->tax_amount ?? 0) > 0)
+                    <tr class="total-row">
+                        <td colspan="7">AIT ({{ (float) ($quotation->tax_percent ?? 0) }}%) (BDT)</td>
+                        <td class="total-price">{{ number_format($quotation->tax_amount ?? 0, 2) }}</td>
+                    </tr>
+                @endif
+
                 <tr class="total-row">
-                    <td colspan="7">ROUND OFF (BDT)</td>
-                    <td class="total-price">{{ number_format($quotation->round_off ?? 0, 2) }}</td>
+                    <td colspan="7">NET TOTAL (BDT)</td>
+                    <td class="total-price">
+                        {{ number_format($quotation->total_amount - ($quotation->vat_amount ?? 0), 2) }}
+                    </td>
                 </tr>
-            @endif
 
-            @if (($quotation->installation_charge ?? 0) > 0)
-                <tr class="total-row">
-                    <td colspan="7">INSTALLATION CHARGE (BDT)</td>
-                    <td class="total-price">{{ number_format($quotation->installation_charge ?? 0, 2) }}</td>
-                </tr>
-            @endif
-
-            @if (($quotation->tax_amount ?? 0) > 0)
-                <tr class="total-row">
-                    <td colspan="7">AIT ({{ (float) ($quotation->tax_percent ?? 0) }}%) (BDT)</td>
-                    <td class="total-price">{{ number_format($quotation->tax_amount ?? 0, 2) }}</td>
-                </tr>
-            @endif
-
-            <tr class="total-row">
-                <td colspan="7">NET TOTAL (BDT)</td>
-                <td class="total-price">
-                    {{ number_format($quotation->total_amount - ($quotation->vat_amount ?? 0), 2) }}
-                </td>
-            </tr>
-
-            @if (($quotation->vat_amount ?? 0) > 0)
-                <tr class="total-row">
-                    <td colspan="7">VAT ({{ (float) ($quotation->vat_percent ?? 0) }}%) (BDT)</td>
-                    <td class="total-price">{{ number_format($quotation->vat_amount ?? 0, 2) }}</td>
-                </tr>
+                @if (($quotation->vat_amount ?? 0) > 0)
+                    <tr class="total-row">
+                        <td colspan="7">VAT ({{ (float) ($quotation->vat_percent ?? 0) }}%) (BDT)</td>
+                        <td class="total-price">{{ number_format($quotation->vat_amount ?? 0, 2) }}</td>
+                    </tr>
+                @endif
             @endif
 
             <tr class="total-row summary-final">
@@ -525,31 +545,27 @@
     </table>
 
     {{-- Amount in Words --}}
-    <div class="post-table-section">
-        @if (!empty($amount_in_words))
-            <div class="amount-in-words aligned-content">
-                In Word: {{ $amount_in_words }}
-            </div>
-        @endif
-    </div>
+    <p class="amount-in-words">{{  'In Word: ' . $amount_in_words  }}</p>
+    
 
     {{-- Terms & Conditions + Signature --}}
     @if (!empty($terms_conditions))
         <div class="post-table-section">
             <div class="terms-title">Terms and Conditions</div>
-            <table class="terms-table">
                 @foreach (explode("\n", $terms_conditions) as $index => $term)
                     @if (trim($term))
-                        <tr>
-                            <td>{{ str_pad($index + 1, 2, '0', STR_PAD_LEFT) }}.</td>
-                            <td>{{ trim($term) }}</td>
-                        </tr>
+                    <div class="terms-item" >
+                       <p class> {{ str_pad($index + 1, 2, '0', STR_PAD_LEFT) }}. {{ trim($term) }}</p>
+                    </div>
                     @endif
                 @endforeach
-            </table>
 
             {{-- Signature Section --}}
             <div class="signature-section">
+                <div class="signature-name-section">
+                    <p>Best Regards,</p>
+                    <p>{{ $company_name ?? 'N/A' }}</p>
+                </div>
                 <div class="signature-content">
                     @if (!empty($signatory_photo) && file_exists($signatory_photo))
                         <p style="margin-bottom: 8px;">
@@ -557,10 +573,10 @@
                                 style="max-height: 70px; max-width: 180px;">
                         </p>
                     @endif
-                    <div class="signature-line"></div>
-                    <p>{{ $signatory_name ?? 'N/A' }}</p>
+                    <p>({{ $signatory_name ?? 'N/A' }})</p>
                     <p>{{ $signatory_designation ?? 'N/A' }}</p>
-                    <p>{{ $company_name ?? 'N/A' }}</p>
+                    <p>Mobile: {{ $signatory_phone ?? 'N/A' }}</p>
+                    <p>{{ $signatory_email ?? 'N/A' }}</p>
                 </div>
             </div>
         </div>
@@ -568,13 +584,16 @@
         {{-- Signature Section (no terms) --}}
         <div class="signature-section">
             <div class="signature-content">
+                <!-- <div class="signature-name-section">
+                    <p>Best Regards,</p>
+                    <p>{{ $company_name ?? 'N/A' }}</p>
+                </div> -->
                 @if (!empty($signatory_photo) && file_exists($signatory_photo))
                     <p style="margin-bottom: 8px;">
                         <img src="{{ $signatory_photo }}" alt="Signature"
                             style="max-height: 70px; max-width: 180px;">
                     </p>
                 @endif
-                <div class="signature-line"></div>
                 <p>{{ $signatory_name ?? 'N/A' }}</p>
                 <p>{{ $signatory_designation ?? 'N/A' }}</p>
                 <p>{{ $company_name ?? 'N/A' }}</p>

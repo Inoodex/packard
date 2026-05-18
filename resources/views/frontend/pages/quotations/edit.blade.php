@@ -142,6 +142,7 @@
                                 <option value="">Choose existing client...</option>
                                 @foreach ($clients as $client)
                                     <option value="{{ $client->id }}" data-name="{{ $client->name }}"
+                                        data-highest="{{ $client->highest_designation }}"
                                         data-phone="{{ $client->phone }}" data-email="{{ $client->email }}"
                                         data-address="{{ $client->address }}"
                                         {{ (string) old('client_id', $quotation->client_id) === (string) $client->id ? 'selected' : '' }}>
@@ -156,6 +157,32 @@
                             <label class="form-label">Client/Company Name *</label>
                             <input type="text" id="client-name-input" name="client_name" class="form-control"
                                 value="{{ old('client_name', $quotation->client_name) }}">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Company Highest Designation</label>
+                            <select id="highest-designation-input" name="highest_designation" class="form-select">
+                                <option value="">Choose or type designation...</option>
+                                @php
+                                    $predefinedDesignations = [
+                                        'The Chairman',
+                                        'The Chief Executive Officer (CEO)',
+                                        'The Deputy Director',
+                                        'The Deputy Managing Director',
+                                        'The Director',
+                                        'The Founder',
+                                        'The General Manager',
+                                        'The Managing Director',
+                                        'The Proprietor',
+                                    ];
+                                    $currentVal = old('highest_designation', $quotation->highest_designation);
+                                @endphp
+                                @foreach($predefinedDesignations as $desig)
+                                    <option value="{{ $desig }}" {{ $currentVal == $desig ? 'selected' : '' }}>{{ $desig }}</option>
+                                @endforeach
+                                @if($currentVal && !in_array($currentVal, $predefinedDesignations))
+                                    <option value="{{ $currentVal }}" selected>{{ $currentVal }}</option>
+                                @endif
+                            </select>
                         </div>
                         <div class="col-md-6">
                             <label class="form-label">Attention To</label>
@@ -211,25 +238,24 @@
                     <h5 class="mb-3">Company & Signatory</h5>
                     <div class="row g-3">
                         <div class="col-md-6">
-                            <label class="form-label">Company Name *</label>
+                            <label class="form-label">Company Name</label>
                             <input type="text" name="company_name" class="form-control"
-                                value="{{ old('company_name', $quotation->company_name ?: $defaultCompany->name ?? '') }}"
-                                required>
+                                value="{{ old('company_name', $quotation->company_name ?: $defaultCompany->name ?? '') }}" readonly style="opacity: 0.5; pointer-events: none;">
                         </div>
                         <div class="col-md-6">
                             <label class="form-label">Company Phone</label>
                             <input type="text" name="company_phone" class="form-control"
-                                value="{{ old('company_phone', $quotation->company_phone ?: $defaultCompany->phone ?? '') }}">
+                                value="{{ old('company_phone', $quotation->company_phone ?: $defaultCompany->phone ?? '') }}" readonly style="opacity: 0.5; pointer-events: none;">
                         </div>
                         <div class="col-md-6">
                             <label class="form-label">Company Email</label>
                             <input type="email" name="company_email" class="form-control"
-                                value="{{ old('company_email', $quotation->company_email ?: $defaultCompany->email ?? '') }}">
+                                value="{{ old('company_email', $quotation->company_email ?: $defaultCompany->email ?? '') }}" readonly style="opacity: 0.5; pointer-events: none;">
                         </div>
                         <div class="col-md-6">
                             <label class="form-label">Company Website</label>
                             <input type="text" name="company_website" class="form-control"
-                                value="{{ old('company_website', $quotation->company_website ?: $defaultCompany->website ?? '') }}">
+                                value="{{ old('company_website', $quotation->company_website ?: $defaultCompany->website ?? '') }}" readonly style="opacity: 0.5; pointer-events: none;">
                         </div>
                         <input type="hidden" name="company_address"
                             value="{{ old('company_address', $quotation->company_address ?: $defaultCompany->address ?? '') }}">
@@ -247,7 +273,7 @@
                                     @endphp
                                     <option value="{{ $signatory->id }}" data-name="{{ $signatory->name }}"
                                         data-photo="{{ $signatoryPhotoPath ? asset($signatoryPhotoPath) : '' }}"
-                                        {{ (string) old('signatory_user_id', $quotation->signatory_user_id ?? '') === (string) $signatory->id ? 'selected' : '' }}>
+                                        {{ (string) old('signatory_user_id') === (string) $signatory->id || (empty(old('signatory_user_id')) && $quotation->signatory_name === $signatory->name) ? 'selected' : '' }}>
                                         {{ $signatory->name }}
                                     </option>
                                 @endforeach
@@ -448,6 +474,7 @@
             const existingClientWrap = document.getElementById('existing-client-wrap');
             const existingClientSelect = document.getElementById('existing-client-select');
             const clientNameInput = document.getElementById('client-name-input');
+            const highestDesignationInput = document.getElementById('highest-designation-input');
             const clientPhoneInput = document.getElementById('client-phone-input');
             const clientEmailInput = document.getElementById('client-email-input');
             const clientAddressInput = document.getElementById('client-address-input');
@@ -463,6 +490,9 @@
 
                 const selected = existingClientSelect.options[existingClientSelect.selectedIndex];
                 clientNameInput.value = selected?.dataset?.name || '';
+                if (highestDesignationInput) {
+                    highestDesignationInput.value = selected?.dataset?.highest || '';
+                }
                 clientPhoneInput.value = selected?.dataset?.phone || '';
                 clientEmailInput.value = selected?.dataset?.email || '';
                 clientAddressInput.value = selected?.dataset?.address || '';
@@ -479,6 +509,7 @@
                 }
 
                 clientNameInput.readOnly = isExisting;
+                if (highestDesignationInput) highestDesignationInput.readOnly = isExisting;
                 clientPhoneInput.readOnly = isExisting;
                 clientEmailInput.readOnly = isExisting;
                 clientAddressInput.readOnly = isExisting;
@@ -693,6 +724,13 @@
                     placeholder: "Choose signatory..."
                 }).on('change', function() {
                     syncSignatoryData();
+                });
+
+                // Highest Designation Select
+                $('#highest-designation-input').select2({
+                    ...select2Options,
+                    tags: true, // Allows typing custom values
+                    placeholder: "Choose or type designation..."
                 });
 
                 // Product Select

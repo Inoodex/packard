@@ -24,6 +24,7 @@ Route::middleware(['auth', 'role:Super Admin'])->group(function () {
     Route::get('quotations/{quotation}/pdf-preview', [QuotationController::class, 'preview'])->name('quotations.pdf.preview');
     Route::get('/quotations/{quotation}/download', [QuotationController::class, 'download'])->name('quotations.download');
     Route::post('quotations/{quotation}/send', [QuotationController::class, 'sendQuotation'])->name('quotations.send');
+    Route::get('quotations-suggestions', [QuotationController::class, 'getSuggestions'])->name('quotations.suggestions');
 
     // Products
     Route::resource('products', ProductController::class);
