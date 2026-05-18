@@ -332,13 +332,13 @@
             margin-top: 50px;
             margin-left: 24pt;
             margin-right: 3%;
-            width: 94%;
+            /* width: 94%; */
             text-align: left;
         }
 
         .signature-content {
             display: inline-block;
-            width: 220px;
+            /* width: 220px; */
             text-align: left;
             margin-right: 30px;
             vertical-align: top;
