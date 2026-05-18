@@ -304,7 +304,7 @@
         /* Terms & Conditions */
         .terms-title {
             text-align: left;
-            margin-left: 30px;
+            margin-left: 32px;
             font-weight: bold;
             text-decoration: underline;
             font-size: 12pt;
