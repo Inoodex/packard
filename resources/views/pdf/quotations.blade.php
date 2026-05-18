@@ -331,7 +331,7 @@
 
         /* Signature Section */
         .signature-section {
-            margin-top: 50px;
+            margin-top: 15px;
             margin-left: 24pt;
             margin-right: 3%;
             /* width: 94%; */
