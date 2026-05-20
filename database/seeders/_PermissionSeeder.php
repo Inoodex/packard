@@ -19,23 +19,44 @@ class _PermissionSeeder extends Seeder
         ]);
 
         Permission::create([
-            'name' => 'Booking',
+            'name' => 'Product Management',
             'guard_name' => 'web',
         ]);
 
         Permission::create([
-            'name' => 'Service Management',
+            'name' => 'Quotation Management',
             'guard_name' => 'web',
         ]);
 
         Permission::create([
-            'name' => 'Sales Management',
+            'name' => 'Client Management',
             'guard_name' => 'web',
         ]);
 
         Permission::create([
-            'name' => 'Settings',
+            'name' => 'Company Management',
             'guard_name' => 'web',
         ]);
+
+        // Not used in the current sidebar/menu permissions.
+        // Permission::create([
+        //     'name' => 'Booking',
+        //     'guard_name' => 'web',
+        // ]);
+
+        // Permission::create([
+        //     'name' => 'Service Management',
+        //     'guard_name' => 'web',
+        // ]);
+
+        // Permission::create([
+        //     'name' => 'Sales Management',
+        //     'guard_name' => 'web',
+        // ]);
+
+        // Permission::create([
+        //     'name' => 'Settings',
+        //     'guard_name' => 'web',
+        // ]);
     }
 }

@@ -10,6 +10,14 @@ use Spatie\Permission\Models\Permission;
 
 class RoleController extends Controller
 {
+    private const ACTIVE_PERMISSIONS = [
+        'Administration',
+        'Product Management',
+        'Quotation Management',
+        'Client Management',
+        'Company Management',
+    ];
+
     /**
      * Display a listing of the resource.
      */
@@ -24,7 +32,9 @@ class RoleController extends Controller
      */
     public function create()
     {
-        $permissions = Permission::get();
+        $permissions = Permission::whereIn('name', self::ACTIVE_PERMISSIONS)
+            ->orderByRaw("FIELD(name, '" . implode("','", self::ACTIVE_PERMISSIONS) . "')")
+            ->get();
         return view('frontend.pages.role.create',compact('permissions'));
     }
 
@@ -72,7 +82,9 @@ class RoleController extends Controller
     public function edit(string $id)
     {
         $role = Role::find($id);
-        $permissions = Permission::get();
+        $permissions = Permission::whereIn('name', self::ACTIVE_PERMISSIONS)
+            ->orderByRaw("FIELD(name, '" . implode("','", self::ACTIVE_PERMISSIONS) . "')")
+            ->get();
         $roleHasPermissions = DB::table('role_has_permissions')
         ->where('role_id',$id)
         ->get();

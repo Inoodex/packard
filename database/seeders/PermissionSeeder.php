@@ -20,19 +20,22 @@ class PermissionSeeder extends Seeder
         // Create ALL permissions that your menu checks for
         $permissions = [
             ['name' => 'Administration', 'guard_name' => 'web'],
-            ['name' => 'Booking', 'guard_name' => 'web'],
-            ['name' => 'Service Management', 'guard_name' => 'web'],
-            ['name' => 'Sales Management', 'guard_name' => 'web'],
-            ['name' => 'Settings', 'guard_name' => 'web'],
-
-            // ADD THESE NEW PERMISSIONS:
             ['name' => 'Product Management', 'guard_name' => 'web'],
-            ['name' => 'Customer Management', 'guard_name' => 'web'],
-            ['name' => 'Vendor Management', 'guard_name' => 'web'],
-            ['name' => 'Purchase Management', 'guard_name' => 'web'],
-            ['name' => 'Inventory Management', 'guard_name' => 'web'],
-            ['name' => 'Expense Management', 'guard_name' => 'web'],
-            ['name' => 'Report Management', 'guard_name' => 'web'],
+            ['name' => 'Quotation Management', 'guard_name' => 'web'],
+            ['name' => 'Client Management', 'guard_name' => 'web'],
+            ['name' => 'Company Management', 'guard_name' => 'web'],
+
+            // Not used in the current sidebar/menu permissions.
+            // ['name' => 'Booking', 'guard_name' => 'web'],
+            // ['name' => 'Service Management', 'guard_name' => 'web'],
+            // ['name' => 'Sales Management', 'guard_name' => 'web'],
+            // ['name' => 'Settings', 'guard_name' => 'web'],
+            // ['name' => 'Customer Management', 'guard_name' => 'web'],
+            // ['name' => 'Vendor Management', 'guard_name' => 'web'],
+            // ['name' => 'Purchase Management', 'guard_name' => 'web'],
+            // ['name' => 'Inventory Management', 'guard_name' => 'web'],
+            // ['name' => 'Expense Management', 'guard_name' => 'web'],
+            // ['name' => 'Report Management', 'guard_name' => 'web'],
         ];
 
         foreach ($permissions as $permission) {
@@ -50,6 +53,19 @@ class PermissionSeeder extends Seeder
 
         // Assign ALL permissions to Super Admin
         $superAdminRole->syncPermissions(Permission::all());
+
+        // // Give Salesperson access to the operational menus they need.
+        // $salespersonRole = Role::firstOrCreate([
+        //     'name' => 'Salesperson',
+        //     'guard_name' => 'web'
+        // ]);
+
+        // $salespersonRole->givePermissionTo([
+        //     'Product Management',
+        //     'Quotation Management',
+        //     'Client Management',
+        //     'Company Management',
+        // ]);
 
         // Assign Super Admin role to your user
         // $user = User::where('email', 'superadmin@example.com')->first();

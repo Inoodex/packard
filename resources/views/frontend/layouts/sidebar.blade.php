@@ -27,8 +27,8 @@
                     </li>
                 @endif
 
-                <!-- Quotation / Payment Management -->
-                @if ($isSuperAdmin || $user->can('Payment Management'))
+                <!-- Quotation Management -->
+                @if ($isSuperAdmin || $user->can('Quotation Management'))
                     <li class="menu-title"><span>Quotation Management</span></li>
                     <li>
                         <a href="{{ route('quotations.index') }}"
