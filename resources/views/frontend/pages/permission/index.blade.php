@@ -15,11 +15,11 @@
             <div class="col">
                 <div class="card">
 
-                    <div class="card-header">
+                    <!-- <div class="card-header">
                         <div class="d-flex justify-content-end">
                             <a href="{{ route('permission.create') }}" class="btn btn-info">Create Permissions</a>
                         </div>
-                    </div>
+                    </div> -->
 
                     <div class="card-body">
                         <div class="table-responsive">
@@ -41,24 +41,12 @@
                                                 <td>{{ $loop->parent->index * 2 + $loop->index + 1 }}</td>
                                                 <td>{{ $item->name }}</td>
                                                 <td>
-                                                    <div class="dropdown">
+                                                    <div class="dropdown opacity-50">
                                                         <button class="btn btn-sm btn-light border" type="button"
-                                                            data-bs-toggle="dropdown" aria-expanded="false">
+                                                            disabled aria-disabled="true" title="Read only"
+                                                            style="cursor: not-allowed;">
                                                             <i class="fas fa-ellipsis-v"></i>
                                                         </button>
-                                                        <ul class="dropdown-menu dropdown-menu-end">
-                                                            <li>
-                                                                <a class="dropdown-item"
-                                                                    href="{{ route('permission.edit', $item->id) }}">Edit</a>
-                                                            </li>
-                                                            <li>
-                                                                <button type="button" class="dropdown-item text-danger"
-                                                                    data-bs-toggle="modal"
-                                                                    data-bs-target="#myModal{{ $item->id }}">
-                                                                    Delete
-                                                                </button>
-                                                            </li>
-                                                        </ul>
                                                     </div>
                                                 </td>
                                             @endforeach
@@ -79,32 +67,6 @@
                 </div>
             </div>
         </div>
-
-        <!-- Modals -->
-        @foreach ($permissions as $item)
-            <div id="myModal{{ $item->id }}" class="modal fade" tabindex="-1" aria-hidden="true">
-                <div class="modal-dialog">
-                    <div class="modal-content">
-                        <div class="modal-header">
-                            <h5 class="modal-title">Delete Permission</h5>
-                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                        </div>
-                        <div class="modal-body">
-                            Are you sure you want to delete this permission:
-                            <strong style="color: darkorange">{{ $item->name }}</strong>?
-                        </div>
-                        <div class="modal-footer">
-                            <form action="{{ route('permission.destroy', $item->id) }}" method="POST">
-                                @csrf
-                                @method('delete')
-                                <button type="submit" class="btn btn-danger">Delete</button>
-                            </form>
-                            <button type="button" class="btn btn-light" data-bs-dismiss="modal">Close</button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        @endforeach
 
     </div>
 @endsection
