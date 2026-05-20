@@ -344,11 +344,11 @@
         }
 
         .terms-number {
-            width: 32px;
+            width: 22px;
         }
 
         .terms-label {
-            width: 132px;
+            width: 80px;
         }
 
         .terms-colon {
