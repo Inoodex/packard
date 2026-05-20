@@ -277,14 +277,16 @@ class QuotationController extends Controller
             $query->where('client_name', 'like', '%' . trim($clientName) . '%');
         }
 
-        $rows = $query->select('attention_to', 'client_designation', 'highest_designation')
+        $rows = $query->select('attention_to', 'client_designation', 'highest_designation', 'created_at')
+            ->latest()
             ->get()
             ->map(fn ($q) => [
-                'attention_to'       => $q->attention_to,
+                'attention_to'       => trim($q->attention_to),
                 'client_designation' => $q->client_designation,
                 'highest_designation'=> $q->highest_designation,
             ])
-            ->unique(fn ($r) => $r['attention_to'] . '||' . $r['client_designation'] . '||' . $r['highest_designation'])
+            ->filter(fn ($r) => $r['attention_to'] !== '')
+            ->unique(fn ($r) => mb_strtolower($r['attention_to']))
             ->values();
 
         return response()->json($rows);

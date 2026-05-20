@@ -239,7 +239,7 @@
                         </div>
                         <div class="col-12">
                             <label class="form-label">Body Content</label>
-                            <textarea name="body_content" class="form-control" rows="8">{{ old('body_content', $defaultBody) }}</textarea>
+                            <textarea name="body_content" class="form-control" rows="6">{{ old('body_content', $defaultBody) }}</textarea>
                         </div>
                         <div class="col-12">
                             <label class="form-label">Terms & Conditions *</label>
@@ -797,9 +797,20 @@
                     const btn = document.createElement('button');
                     btn.type      = 'button';
                     btn.className = 'dropdown-item';
+                    const attentionName = (item.attention_to ?? '').trim();
+                    const clientDesignation = (item.client_designation ?? '').trim();
+                    const highestDesignation = (item.highest_designation ?? '').trim();
                     let label = `<span class="fw-semibold">${item.attention_to}</span>`;
-                    if (item.client_designation) label += ` <small class="text-muted ms-2">${item.client_designation}</small>`;
-                    if (item.highest_designation) label += ` <br><small class="text-info">${item.highest_designation}</small>`;
+                    if (clientDesignation && clientDesignation.toLowerCase() !== attentionName.toLowerCase()) {
+                        label += ` <small class="text-muted ms-2">${clientDesignation}</small>`;
+                    }
+                    if (
+                        highestDesignation
+                        && highestDesignation.toLowerCase() !== attentionName.toLowerCase()
+                        && highestDesignation.toLowerCase() !== clientDesignation.toLowerCase()
+                    ) {
+                        label += ` <br><small class="text-info">${highestDesignation}</small>`;
+                    }
                     btn.innerHTML = label;
                     btn.addEventListener('click', () => {
                         attentionInput.value   = item.attention_to;

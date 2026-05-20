@@ -223,7 +223,7 @@
                         </div>
                         <div class="col-12">
                             <label class="form-label">Body Content</label>
-                            <textarea name="body_content" class="form-control" rows="8">{{ old('body_content', $quotation->body_content) }}</textarea>
+                            <textarea name="body_content" class="form-control" rows="6">{{ old('body_content', $quotation->body_content) }}</textarea>
                         </div>
                         <div class="col-12">
                             <label class="form-label">Terms & Conditions *</label>
